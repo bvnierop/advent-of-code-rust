@@ -3,10 +3,10 @@
 * Implementation Plan for README Features
 This plan outlines the steps to implement the features and processes described in the README file.
 
-** Step 1: Set Up Dependency Management [2/4]
+** Step 1: Set Up Dependency Management [3/4]
 - [X] Install Nix and Direnv on the development machine.
 - [X] Create and configure `flake.nix`
-- [ ] Create and configure `.envrc`
+- [X] Create and configure `.envrc`
 - [ ] Test the setup by running a simple Rust project.
 
 ** Step 2: Organize Folder Structure
