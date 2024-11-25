@@ -1,1 +1,6 @@
-.direnv/ 
+.direnv/
+
+# Rust build directories
+target/
+debug/
+release/ 
