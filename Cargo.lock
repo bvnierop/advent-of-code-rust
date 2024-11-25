@@ -87,6 +87,7 @@ dependencies = [
  "mockall",
  "reqwest",
  "scraper",
+ "tempfile",
  "time",
 ]
 

@@ -4,6 +4,7 @@ use crate::fs::{FileSystem, RealFileSystem, DryRunFileSystem};
 use reqwest::blocking::Client;
 use scraper::{Html, Selector};
 use std::process::Command;
+use std::fs::read_to_string;
 
 #[derive(Debug, Clone)]
 pub enum YearOrDay {
@@ -75,9 +76,30 @@ mod tests {
     }
 }"###;
 
+fn get_session_cookie() -> Option<String> {
+    read_to_string(".session").ok()
+        .map(|s| s.trim().to_string())
+}
+
+fn get_client() -> Result<Client, Box<dyn std::error::Error>> {
+    let client = Client::builder();
+    
+    if let Some(session) = get_session_cookie() {
+        let cookie = format!("session={}", session);
+        Ok(client.default_headers(
+            std::iter::once((
+                reqwest::header::COOKIE,
+                reqwest::header::HeaderValue::from_str(&cookie)?
+            )).collect()
+        ).build()?)
+    } else {
+        Ok(client.build()?)
+    }
+}
+
 fn get_problem_name(year: u16, day: u8) -> Result<String, Box<dyn std::error::Error>> {
     let url = format!("https://adventofcode.com/{}/day/{}", year, day);
-    let client = Client::new();
+    let client = get_client()?;
     let response = client.get(&url).send()?;
     let html = response.text()?;
     
@@ -98,7 +120,7 @@ fn get_problem_name(year: u16, day: u8) -> Result<String, Box<dyn std::error::Er
 
 fn get_problem_statement(year: u16, day: u8) -> Result<String, Box<dyn std::error::Error>> {
     let url = format!("https://adventofcode.com/{}/day/{}", year, day);
-    let client = Client::new();
+    let client = get_client()?;
     let response = client.get(&url).send()?;
     let html = response.text()?;
     
@@ -282,5 +304,22 @@ mod tests {
         let (dir, file) = get_problem_paths(2024, 1);
         assert_eq!(file.file_name().unwrap(), "01.org");
         assert!(dir.ends_with("problem/2024"));
+    }
+
+    #[test]
+    fn test_session_cookie_parsing() {
+        // Create temporary session file
+        let temp_dir = tempfile::tempdir().unwrap();
+        let session_file = temp_dir.path().join(".session");
+        std::fs::write(&session_file, "test-session-cookie\n").unwrap();
+        
+        // Temporarily override the current directory
+        let original_dir = std::env::current_dir().unwrap();
+        std::env::set_current_dir(&temp_dir).unwrap();
+        
+        assert_eq!(get_session_cookie(), Some("test-session-cookie".to_string()));
+        
+        // Clean up
+        std::env::set_current_dir(original_dir).unwrap();
     }
 } 
