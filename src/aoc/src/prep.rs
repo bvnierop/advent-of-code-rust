@@ -3,6 +3,7 @@ use time::{OffsetDateTime, Month};
 use crate::fs::{FileSystem, RealFileSystem, DryRunFileSystem};
 use reqwest::blocking::Client;
 use scraper::{Html, Selector};
+use std::process::Command;
 
 #[derive(Debug, Clone)]
 pub enum YearOrDay {
@@ -95,6 +96,79 @@ fn get_problem_name(year: u16, day: u8) -> Result<String, Box<dyn std::error::Er
         .ok_or_else(|| "Could not find problem title".into())
 }
 
+fn get_problem_statement(year: u16, day: u8) -> Result<String, Box<dyn std::error::Error>> {
+    let url = format!("https://adventofcode.com/{}/day/{}", year, day);
+    let client = Client::new();
+    let response = client.get(&url).send()?;
+    let html = response.text()?;
+    
+    let document = Html::parse_document(&html);
+    let selector = Selector::parse("article.day-desc").unwrap();
+    
+    let mut content = String::new();
+    for article in document.select(&selector) {
+        content.push_str(&article.html());
+        content.push_str("\n\n");
+    }
+    
+    Ok(content)
+}
+
+fn convert_html_to_org(html: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let mut child = Command::new("pandoc")
+        .arg("-f")
+        .arg("html")
+        .arg("-t")
+        .arg("org")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .spawn()?;
+    
+    if let Some(mut stdin) = child.stdin.take() {
+        use std::io::Write;
+        stdin.write_all(html.as_bytes())?;
+    }
+    
+    let output = child.wait_with_output()?;
+    
+    if !output.status.success() {
+        return Err("Pandoc conversion failed".into());
+    }
+    
+    Ok(String::from_utf8(output.stdout)?)
+}
+
+fn get_problem_paths(year: u16, day: u8) -> (PathBuf, PathBuf) {
+    let problems_dir = PathBuf::from("problem")
+        .join(year.to_string());
+    let filename = format!("{:02}.org", day);
+    
+    (problems_dir.clone(), problems_dir.join(filename))
+}
+
+fn create_problem_file(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Result<()> {
+    let (dir, path) = get_problem_paths(year, day);
+
+    if fs.exists(&path) {
+        println!("Problem statement already exists: {}", path.display());
+        return Ok(());
+    }
+
+    match get_problem_statement(year, day) {
+        Ok(html) => match convert_html_to_org(&html) {
+            Ok(org) => {
+                fs.create_dir_all(&dir)?;
+                fs.write_file(&path, &org)?;
+                println!("Created problem statement: {}", path.display());
+            }
+            Err(e) => eprintln!("Failed to convert problem statement: {}", e),
+        },
+        Err(e) => eprintln!("Failed to fetch problem statement: {}", e),
+    }
+
+    Ok(())
+}
+
 fn get_solution_paths(year: u16, day: u8, name: &str) -> (PathBuf, PathBuf) {
     let solutions_dir = PathBuf::from("src")
         .join("solutions")
@@ -150,6 +224,10 @@ pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>, dry_run: bool
     if let Err(e) = create_solution_file(year, day, fs) {
         eprintln!("Failed to create solution file: {}", e);
     }
+
+    if let Err(e) = create_problem_file(year, day, fs) {
+        eprintln!("Failed to create problem file: {}", e);
+    }
 }
 
 #[cfg(test)]
@@ -197,5 +275,12 @@ mod tests {
     fn test_solution_paths() {
         let (_dir, file) = get_solution_paths(2024, 1, "Test Problem Name!");
         assert_eq!(file.file_name().unwrap(), "01-test-problem-name.rs");
+    }
+
+    #[test]
+    fn test_problem_paths() {
+        let (dir, file) = get_problem_paths(2024, 1);
+        assert_eq!(file.file_name().unwrap(), "01.org");
+        assert!(dir.ends_with("problem/2024"));
     }
 } 

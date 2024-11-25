@@ -23,6 +23,7 @@
             pkgs.rust-analyzer
             pkgs.pkg-config
             pkgs.openssl
+            pkgs.pandoc
           ];
         };
       }
