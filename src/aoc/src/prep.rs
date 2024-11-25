@@ -50,12 +50,8 @@ pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>, dry_run: bool
     
     let fs: &dyn FileSystem = if dry_run { &DryRunFileSystem } else { &RealFileSystem };
     
-    if let Err(e) = create_solution_file(year, day, fs) {
-        eprintln!("Failed to create solution file: {}", e);
-    }
-
-    if let Err(e) = create_problem_file(year, day, fs) {
-        eprintln!("Failed to create problem file: {}", e);
+    if let Err(e) = create_files(year, day, fs) {
+        eprintln!("Failed to create files: {}", e);
     }
 }
 
@@ -117,54 +113,51 @@ mod tests {
     }
 }"###;
 
-fn create_solution_file(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Result<()> {
-    let name = match get_problem_name(year, day) {
+fn create_files(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Result<()> {
+    let statement = match get_problem_statement(year, day) {
+        Ok(html) => html,
+        Err(e) => {
+            eprintln!("Failed to fetch problem statement: {}", e);
+            return Ok(());
+        }
+    };
+
+    let name = match extract_problem_name(&statement) {
         Ok(name) => name,
         Err(e) => {
-            eprintln!("Warning: Could not fetch problem name: {}", e);
+            eprintln!("Warning: Could not extract problem name: {}", e);
             "placeholder-name".to_string()
         }
     };
 
-    let (dir, path) = get_solution_paths(year, day, &name);
+    create_solution_file(year, day, &name, fs)?;
+    create_problem_file(year, day, &name, &statement, fs)?;
 
-    if fs.exists(&path) {
-        return Ok(());
-    }
-
-    fs.create_dir_all(&dir)?;
-    fs.write_file(&path, SOLUTION_TEMPLATE)?;
     Ok(())
 }
 
-fn create_problem_file(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Result<()> {
-    let name = match get_problem_name(year, day) {
-        Ok(name) => name,
-        Err(e) => {
-            eprintln!("Warning: Could not fetch problem name: {}", e);
-            "placeholder-name".to_string()
-        }
-    };
-
-    let (dir, path) = get_problem_paths(year, day, &name);
-
-    if fs.exists(&path) {
-        println!("Problem statement already exists: {}", path.display());
-        return Ok(());
+fn create_solution_file(year: u16, day: u8, name: &str, fs: &dyn FileSystem) -> std::io::Result<()> {
+    let (dir, path) = get_solution_paths(year, day, name);
+    if !fs.exists(&path) {
+        fs.create_dir_all(&dir)?;
+        fs.write_file(&path, SOLUTION_TEMPLATE)?;
+        println!("Created solution file: {}", path.display());
     }
+    Ok(())
+}
 
-    match get_problem_statement(year, day) {
-        Ok(html) => match convert_html_to_org(&html) {
+fn create_problem_file(year: u16, day: u8, name: &str, html: &str, fs: &dyn FileSystem) -> std::io::Result<()> {
+    let (dir, path) = get_problem_paths(year, day, name);
+    if !fs.exists(&path) {
+        match convert_html_to_org(html) {
             Ok(org) => {
                 fs.create_dir_all(&dir)?;
                 fs.write_file(&path, &org)?;
                 println!("Created problem statement: {}", path.display());
             }
             Err(e) => eprintln!("Failed to convert problem statement: {}", e),
-        },
-        Err(e) => eprintln!("Failed to fetch problem statement: {}", e),
+        }
     }
-
     Ok(())
 }
 
@@ -214,13 +207,8 @@ fn get_client() -> Result<Client, Box<dyn std::error::Error>> {
     }
 }
 
-fn get_problem_name(year: u16, day: u8) -> Result<String, Box<dyn std::error::Error>> {
-    let url = format!("https://adventofcode.com/{}/day/{}", year, day);
-    let client = get_client()?;
-    let response = client.get(&url).send()?;
-    let html = response.text()?;
-    
-    let document = Html::parse_document(&html);
+fn extract_problem_name(html: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let document = Html::parse_document(html);
     let selector = Selector::parse("article.day-desc > h2").unwrap();
     
     document.select(&selector)
@@ -230,7 +218,7 @@ fn get_problem_name(year: u16, day: u8) -> Result<String, Box<dyn std::error::Er
                 .collect::<String>()
                 .split(':')
                 .nth(1)
-                .map(|s| s.trim().to_string())
+                .map(|s| s.trim_end_matches('-').trim().to_string())
         })
         .ok_or_else(|| "Could not find problem title".into())
 }
@@ -309,29 +297,46 @@ mod tests {
     }
 
     #[test]
-    fn test_create_solution_file() {
+    fn test_create_files() {
         let year = 2024;
         let day = 1;
-        let expected_dir = PathBuf::from("src/solutions/2024");
-        let expected_file = expected_dir.join("01-placeholder-name.rs");
+        let expected_solution_dir = PathBuf::from("src/solutions/2024");
+        let expected_solution_file = expected_solution_dir.join("01-placeholder-name.rs");
+        let expected_problem_dir = PathBuf::from("problem/2024");
+        let expected_problem_file = expected_problem_dir.join("01-placeholder-name.org");
         
         let mut mock = MockFileSystem::new();
         mock.expect_create_dir_all()
-            .with(eq(expected_dir))
+            .with(eq(expected_solution_dir))
             .times(1)
             .returning(|_| Ok(()));
         
         mock.expect_exists()
-            .with(eq(expected_file.clone()))
+            .with(eq(expected_solution_file.clone()))
             .times(1)
             .return_const(false);
-            
+
         mock.expect_write_file()
-            .with(eq(expected_file), eq(SOLUTION_TEMPLATE))
+            .with(eq(expected_solution_file.clone()), eq(SOLUTION_TEMPLATE))
+            .times(1)
+            .returning(|_, _| Ok(()));
+
+        mock.expect_create_dir_all()
+            .with(eq(expected_problem_dir))
+            .times(1)
+            .returning(|_| Ok(()));
+
+        mock.expect_exists()
+            .with(eq(expected_problem_file.clone()))
+            .times(1)
+            .return_const(false);
+
+        mock.expect_write_file()
+            .with(eq(expected_problem_file.clone()), eq("\n"))
             .times(1)
             .returning(|_, _| Ok(()));
         
-        create_solution_file(year, day, &mock).unwrap();
+        create_files(year, day, &mock).unwrap();
     }
 
     #[test]
@@ -361,5 +366,11 @@ mod tests {
         
         // Clean up
         std::env::set_current_dir(original_dir).unwrap();
+    }
+
+    #[test]
+    fn test_extract_problem_name() {
+        let html = r#"<!DOCTYPE html><html><body><article class="day-desc"><h2>--- Day 1: Test Problem ---</h2></article></body></html>"#;
+        assert_eq!(extract_problem_name(html).unwrap(), "Test Problem");
     }
 } 
