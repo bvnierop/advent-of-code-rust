@@ -48,16 +48,15 @@ pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>, dry_run: bool
     
     let fs: &dyn FileSystem = if dry_run { &DryRunFileSystem } else { &RealFileSystem };
     
-    let client = match HttpAdventOfCodeClient::new() {
-        Ok(client) => client,
+    match HttpAdventOfCodeClient::new() {
+        Ok(client) => {
+            if let Err(e) = create_files(year, day, fs, &client) {
+                eprintln!("Failed to create files: {}", e);
+            }
+        }
         Err(e) => {
             eprintln!("Failed to create AoC client: {}", e);
-            return;
         }
-    };
-    
-    if let Err(e) = create_files(year, day, fs, &client) {
-        eprintln!("Failed to create files: {}", e);
     }
 }
 
