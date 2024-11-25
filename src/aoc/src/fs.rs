@@ -17,12 +17,19 @@ impl FileSystem for RealFileSystem {
     }
 
     fn exists(&self, path: &Path) -> bool {
-        path.exists()
+        if path.exists() {
+            println!("File exists: {}", path.display());
+            true
+        } else {
+            false
+        }
     }
 
     fn write_file(&self, path: &Path, contents: &str) -> std::io::Result<()> {
         let mut file = File::create(path)?;
-        write!(file, "{}", contents)
+        write!(file, "{}", contents)?;
+        println!("Created file: {}", path.display());
+        Ok(())
     }
 }
 

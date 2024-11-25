@@ -156,7 +156,6 @@ fn create_solution_file(year: u16, day: u8, name: &str, fs: &dyn FileSystem) -> 
     if !fs.exists(&path) {
         fs.create_dir_all(&dir)?;
         fs.write_file(&path, SOLUTION_TEMPLATE)?;
-        println!("Created solution file: {}", path.display());
     }
     Ok(())
 }
@@ -168,7 +167,6 @@ fn create_problem_file(year: u16, day: u8, name: &str, html: &str, fs: &dyn File
             Ok(org) => {
                 fs.create_dir_all(&dir)?;
                 fs.write_file(&path, &org)?;
-                println!("Created problem statement: {}", path.display());
             }
             Err(e) => eprintln!("Failed to convert problem statement: {}", e),
         }
@@ -182,13 +180,11 @@ fn create_sample_files(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Resu
     if !fs.exists(&sample_in) {
         fs.create_dir_all(&dir)?;
         fs.write_file(&sample_in, "")?;
-        println!("Created sample input file: {}", sample_in.display());
     }
     
     if !fs.exists(&sample_out) {
         fs.create_dir_all(&dir)?;
-        fs.write_file(&sample_out, "\n\n")?; // Space for both level 1 and 2 answers
-        println!("Created sample output file: {}", sample_out.display());
+        fs.write_file(&sample_out, "\n\n")?;
     }
     
     Ok(())
@@ -202,7 +198,6 @@ fn create_input_file(year: u16, day: u8, fs: &dyn FileSystem, client: &dyn Adven
             Ok(input) => {
                 fs.create_dir_all(&dir)?;
                 fs.write_file(&path, &input)?;
-                println!("Created input file: {}", path.display());
             }
             Err(e) => eprintln!("Failed to download input: {}", e),
         }
