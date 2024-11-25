@@ -146,6 +146,7 @@ fn create_all_files(year: u16, day: u8, name: &str, statement: &str, fs: &dyn Fi
 {
     create_solution_file(year, day, name, fs)?;
     create_problem_file(year, day, name, statement, fs)?;
+    create_sample_files(year, day, fs)?;
     Ok(())
 }
 
@@ -174,6 +175,24 @@ fn create_problem_file(year: u16, day: u8, name: &str, html: &str, fs: &dyn File
     Ok(())
 }
 
+fn create_sample_files(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Result<()> {
+    let (dir, sample_in, sample_out) = get_sample_paths(year, day);
+    
+    if !fs.exists(&sample_in) {
+        fs.create_dir_all(&dir)?;
+        fs.write_file(&sample_in, "")?;
+        println!("Created sample input file: {}", sample_in.display());
+    }
+    
+    if !fs.exists(&sample_out) {
+        fs.create_dir_all(&dir)?;
+        fs.write_file(&sample_out, "\n\n")?; // Space for both level 1 and 2 answers
+        println!("Created sample output file: {}", sample_out.display());
+    }
+    
+    Ok(())
+}
+
 // Path Generation
 // --------------
 
@@ -194,6 +213,16 @@ fn get_problem_paths(year: u16, day: u8, name: &str) -> (PathBuf, PathBuf) {
     let filename = format!("{:02}-{}.org", day, to_kebab_case(name));
     
     (problems_dir.clone(), problems_dir.join(filename))
+}
+
+fn get_sample_paths(year: u16, day: u8) -> (PathBuf, PathBuf, PathBuf) {
+    let input_dir = PathBuf::from("input")
+        .join(year.to_string());
+    
+    let sample_in = input_dir.join(format!("{:02}-sample.in", day));
+    let sample_out = input_dir.join(format!("{:02}-sample.out", day));
+    
+    (input_dir, sample_in, sample_out)
 }
 
 // Utilities
@@ -279,5 +308,12 @@ mod tests {
     fn test_problem_paths() {
         let (_dir, file) = get_problem_paths(2024, 1, "Test Problem Name!");
         assert_eq!(file.file_name().unwrap(), "01-test-problem-name.org");
+    }
+
+    #[test]
+    fn test_sample_paths() {
+        let (_dir, input, output) = get_sample_paths(2024, 1);
+        assert_eq!(input.file_name().unwrap(), "01-sample.in");
+        assert_eq!(output.file_name().unwrap(), "01-sample.out");
     }
 } 
