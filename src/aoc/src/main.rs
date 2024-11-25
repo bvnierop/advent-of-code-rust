@@ -20,6 +20,10 @@ enum Commands {
         /// Second argument (year or day)
         #[arg(value_parser = prep::parse_year_or_day)]
         second: Option<prep::YearOrDay>,
+
+        /// Only show what would be done, without making changes
+        #[arg(long, short = 'n')]
+        dry_run: bool,
     },
 }
 
@@ -27,7 +31,7 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Prep { first, second } => prep::handle(first, second),
+        Commands::Prep { first, second, dry_run } => prep::handle(first, second, dry_run),
     }
 }
 
@@ -58,6 +62,12 @@ mod tests {
             .expect("prep command should exist");
         
         let args: Vec<_> = prep_cmd.get_arguments().collect();
-        assert_eq!(args.len(), 2, "prep should accept two optional arguments");
+        
+        assert_eq!(args.len(), 3, "prep should accept two optional arguments and a dry-run flag");
+        
+        assert!(
+            args.iter().any(|a| a.get_id().as_str() == "dry_run"),
+            "prep should have a dry-run flag"
+        );
     }
 }

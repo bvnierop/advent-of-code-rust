@@ -97,12 +97,16 @@ impl FileSystem for RealFileSystem {
     }
 }
 
-fn create_solution_file(year: u16, day: u8, fs: &impl FileSystem) -> std::io::Result<()> {
+fn create_solution_file(year: u16, day: u8, fs: &impl FileSystem, dry_run: bool) -> std::io::Result<()> {
     let solutions_dir = PathBuf::from("src")
         .join("solutions")
         .join(year.to_string());
     
-    fs.create_dir_all(&solutions_dir)?;
+    if dry_run {
+        println!("Would create directory: {}", solutions_dir.display());
+    } else {
+        fs.create_dir_all(&solutions_dir)?;
+    }
     
     let filename = format!("{:02}-{}.rs", day, "placeholder-name");
     let path = solutions_dir.join(filename);
@@ -112,20 +116,27 @@ fn create_solution_file(year: u16, day: u8, fs: &impl FileSystem) -> std::io::Re
         return Ok(());
     }
 
-    fs.write_file(&path, SOLUTION_TEMPLATE)?;
-    println!("Created solution file: {}", path.display());
+    if dry_run {
+        println!("Would create file: {}", path.display());
+    } else {
+        fs.write_file(&path, SOLUTION_TEMPLATE)?;
+        println!("Created solution file: {}", path.display());
+    }
     Ok(())
 }
 
-pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>) {
+pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>, dry_run: bool) {
     let (year, day) = extract_year_and_day(first, second);
     let (current_year, current_day) = get_current_advent();
     let year = year.unwrap_or(current_year);
     let day = day.unwrap_or(current_day);
     
-    println!("Preparing environment for year {} day {}...", year, day);
+    println!("{}Preparing environment for year {} day {}...", 
+        if dry_run { "Would be " } else { "" },
+        year, 
+        day);
     
-    if let Err(e) = create_solution_file(year, day, &RealFileSystem) {
+    if let Err(e) = create_solution_file(year, day, &RealFileSystem, dry_run) {
         eprintln!("Failed to create solution file: {}", e);
     }
 }
@@ -167,6 +178,23 @@ mod tests {
             .times(1)
             .returning(|_, _| Ok(()));
         
-        create_solution_file(year, day, &mock).unwrap();
+        create_solution_file(year, day, &mock, false).unwrap();
+    }
+
+    #[test]
+    fn test_create_solution_file_dry_run() {
+        let year = 2024;
+        let day = 1;
+        let expected_dir = PathBuf::from("src/solutions/2024");
+        let expected_file = expected_dir.join("01-placeholder-name.rs");
+        
+        let mut mock = MockFileSystem::new();
+        mock.expect_exists()
+            .with(eq(expected_file))
+            .times(1)
+            .return_const(false);
+        
+        // No other filesystem operations should be called
+        create_solution_file(year, day, &mock, true).unwrap();
     }
 } 
