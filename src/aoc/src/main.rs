@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 
 mod prep;
 mod fs;
+mod aoc_client;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]

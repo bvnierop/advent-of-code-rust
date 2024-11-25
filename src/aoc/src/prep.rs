@@ -1,10 +1,8 @@
 use std::path::PathBuf;
 use time::{OffsetDateTime, Month};
 use crate::fs::{FileSystem, RealFileSystem, DryRunFileSystem};
-use reqwest::blocking::Client;
-use scraper::{Html, Selector};
+use crate::aoc_client::{AdventOfCodeClient, RealClient};
 use std::process::Command;
-use std::fs::read_to_string;
 
 // Public Interface
 // ---------------
@@ -50,7 +48,15 @@ pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>, dry_run: bool
     
     let fs: &dyn FileSystem = if dry_run { &DryRunFileSystem } else { &RealFileSystem };
     
-    if let Err(e) = create_files(year, day, fs) {
+    let client = match RealClient::new() {
+        Ok(client) => client,
+        Err(e) => {
+            eprintln!("Failed to create AoC client: {}", e);
+            return;
+        }
+    };
+    
+    if let Err(e) = create_files(year, day, fs, &client) {
         eprintln!("Failed to create files: {}", e);
     }
 }
@@ -113,8 +119,8 @@ mod tests {
     }
 }"###;
 
-fn create_files(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Result<()> {
-    let statement = match get_problem_statement(year, day) {
+fn create_files(year: u16, day: u8, fs: &dyn FileSystem, client: &dyn AdventOfCodeClient) -> std::io::Result<()> {
+    let statement = match client.get_problem_statement(year, day) {
         Ok(html) => html,
         Err(e) => {
             eprintln!("Failed to fetch problem statement: {}", e);
@@ -122,7 +128,7 @@ fn create_files(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Result<()> 
         }
     };
 
-    let name = match extract_problem_name(&statement) {
+    let name = match client.extract_problem_name(&statement) {
         Ok(name) => name,
         Err(e) => {
             eprintln!("Warning: Could not extract problem name: {}", e);
@@ -183,64 +189,6 @@ fn get_problem_paths(year: u16, day: u8, name: &str) -> (PathBuf, PathBuf) {
     (problems_dir.clone(), problems_dir.join(filename))
 }
 
-// HTTP Client
-// ----------
-
-fn get_session_cookie() -> Option<String> {
-    read_to_string(".session").ok()
-        .map(|s| s.trim().to_string())
-}
-
-fn get_client() -> Result<Client, Box<dyn std::error::Error>> {
-    let client = Client::builder();
-    
-    if let Some(session) = get_session_cookie() {
-        let cookie = format!("session={}", session);
-        Ok(client.default_headers(
-            std::iter::once((
-                reqwest::header::COOKIE,
-                reqwest::header::HeaderValue::from_str(&cookie)?
-            )).collect()
-        ).build()?)
-    } else {
-        Ok(client.build()?)
-    }
-}
-
-fn extract_problem_name(html: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let document = Html::parse_document(html);
-    let selector = Selector::parse("article.day-desc > h2").unwrap();
-    
-    document.select(&selector)
-        .next()
-        .and_then(|h2| {
-            h2.text()
-                .collect::<String>()
-                .split(':')
-                .nth(1)
-                .map(|s| s.trim_end_matches('-').trim().to_string())
-        })
-        .ok_or_else(|| "Could not find problem title".into())
-}
-
-fn get_problem_statement(year: u16, day: u8) -> Result<String, Box<dyn std::error::Error>> {
-    let url = format!("https://adventofcode.com/{}/day/{}", year, day);
-    let client = get_client()?;
-    let response = client.get(&url).send()?;
-    let html = response.text()?;
-    
-    let document = Html::parse_document(&html);
-    let selector = Selector::parse("article.day-desc").unwrap();
-    
-    let mut content = String::new();
-    for article in document.select(&selector) {
-        content.push_str(&article.html());
-        content.push_str("\n\n");
-    }
-    
-    Ok(content)
-}
-
 // Utilities
 // --------
 
@@ -286,6 +234,7 @@ mod tests {
     use super::*;
     use mockall::predicate::*;
     use crate::fs::MockFileSystem;
+    use crate::aoc_client::FakeClient;
 
     #[test]
     fn test_year_day_parsing() {
@@ -301,9 +250,9 @@ mod tests {
         let year = 2024;
         let day = 1;
         let expected_solution_dir = PathBuf::from("src/solutions/2024");
-        let expected_solution_file = expected_solution_dir.join("01-placeholder-name.rs");
+        let expected_solution_file = expected_solution_dir.join("01-test-problem.rs");
         let expected_problem_dir = PathBuf::from("problem/2024");
-        let expected_problem_file = expected_problem_dir.join("01-placeholder-name.org");
+        let expected_problem_file = expected_problem_dir.join("01-test-problem.org");
         
         let mut mock = MockFileSystem::new();
         mock.expect_create_dir_all()
@@ -332,11 +281,12 @@ mod tests {
             .return_const(false);
 
         mock.expect_write_file()
-            .with(eq(expected_problem_file.clone()), eq("\n"))
+            .with(eq(expected_problem_file.clone()), eq("test html\n"))
             .times(1)
             .returning(|_, _| Ok(()));
         
-        create_files(year, day, &mock).unwrap();
+        let client = FakeClient::new("test html", "Test Problem");
+        create_files(year, day, &mock, &client).unwrap();
     }
 
     #[test]
@@ -352,25 +302,9 @@ mod tests {
     }
 
     #[test]
-    fn test_session_cookie_parsing() {
-        // Create temporary session file
-        let temp_dir = tempfile::tempdir().unwrap();
-        let session_file = temp_dir.path().join(".session");
-        std::fs::write(&session_file, "test-session-cookie\n").unwrap();
-        
-        // Temporarily override the current directory
-        let original_dir = std::env::current_dir().unwrap();
-        std::env::set_current_dir(&temp_dir).unwrap();
-        
-        assert_eq!(get_session_cookie(), Some("test-session-cookie".to_string()));
-        
-        // Clean up
-        std::env::set_current_dir(original_dir).unwrap();
-    }
-
-    #[test]
     fn test_extract_problem_name() {
+        let client = RealClient::new().unwrap();
         let html = r#"<!DOCTYPE html><html><body><article class="day-desc"><h2>--- Day 1: Test Problem ---</h2></article></body></html>"#;
-        assert_eq!(extract_problem_name(html).unwrap(), "Test Problem");
+        assert_eq!(client.extract_problem_name(html).unwrap(), "Test Problem");
     }
 } 
