@@ -1,6 +1,6 @@
 use std::fs::{self, File};
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use time::{OffsetDateTime, Month};
 
 #[derive(Debug, Clone)]
@@ -73,23 +73,46 @@ mod tests {
     }
 }"###;
 
-fn create_solution_file(year: u16, day: u8) -> std::io::Result<()> {
+#[cfg_attr(test, mockall::automock)]
+trait FileSystem {
+    fn create_dir_all(&self, path: &Path) -> std::io::Result<()>;
+    fn exists(&self, path: &Path) -> bool;
+    fn write_file(&self, path: &Path, contents: &str) -> std::io::Result<()>;
+}
+
+struct RealFileSystem;
+
+impl FileSystem for RealFileSystem {
+    fn create_dir_all(&self, path: &Path) -> std::io::Result<()> {
+        fs::create_dir_all(path)
+    }
+
+    fn exists(&self, path: &Path) -> bool {
+        path.exists()
+    }
+
+    fn write_file(&self, path: &Path, contents: &str) -> std::io::Result<()> {
+        let mut file = File::create(path)?;
+        write!(file, "{}", contents)
+    }
+}
+
+fn create_solution_file(year: u16, day: u8, fs: &impl FileSystem) -> std::io::Result<()> {
     let solutions_dir = PathBuf::from("src")
         .join("solutions")
         .join(year.to_string());
     
-    fs::create_dir_all(&solutions_dir)?;
+    fs.create_dir_all(&solutions_dir)?;
     
     let filename = format!("{:02}-{}.rs", day, "placeholder-name");
     let path = solutions_dir.join(filename);
     
-    if path.exists() {
+    if fs.exists(&path) {
         println!("Solution file already exists: {}", path.display());
         return Ok(());
     }
 
-    let mut file = File::create(&path)?;
-    write!(file, "{}", SOLUTION_TEMPLATE)?;
+    fs.write_file(&path, SOLUTION_TEMPLATE)?;
     println!("Created solution file: {}", path.display());
     Ok(())
 }
@@ -102,7 +125,7 @@ pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>) {
     
     println!("Preparing environment for year {} day {}...", year, day);
     
-    if let Err(e) = create_solution_file(year, day) {
+    if let Err(e) = create_solution_file(year, day, &RealFileSystem) {
         eprintln!("Failed to create solution file: {}", e);
     }
 }
@@ -110,7 +133,7 @@ pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
+    use mockall::predicate::*;
 
     #[test]
     fn test_year_day_parsing() {
@@ -125,18 +148,25 @@ mod tests {
     fn test_create_solution_file() {
         let year = 2024;
         let day = 1;
-        let dir = PathBuf::from("src/solutions").join(year.to_string());
-        let file = dir.join("01-placeholder-name.rs");
+        let expected_dir = PathBuf::from("src/solutions/2024");
+        let expected_file = expected_dir.join("01-placeholder-name.rs");
         
-        // Clean up from previous test runs if needed
-        let _ = fs::remove_file(&file);
-        let _ = fs::remove_dir(&dir);
+        let mut mock = MockFileSystem::new();
+        mock.expect_create_dir_all()
+            .with(eq(expected_dir))
+            .times(1)
+            .returning(|_| Ok(()));
         
-        create_solution_file(year, day).unwrap();
-        assert!(file.exists(), "Solution file should exist");
+        mock.expect_exists()
+            .with(eq(expected_file.clone()))
+            .times(1)
+            .return_const(false);
+            
+        mock.expect_write_file()
+            .with(eq(expected_file), eq(SOLUTION_TEMPLATE))
+            .times(1)
+            .returning(|_, _| Ok(()));
         
-        // Clean up
-        let _ = fs::remove_file(file);
-        let _ = fs::remove_dir(dir);
+        create_solution_file(year, day, &mock).unwrap();
     }
 } 
