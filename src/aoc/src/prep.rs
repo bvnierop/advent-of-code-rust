@@ -1,7 +1,6 @@
-use std::fs::{self, File};
-use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use time::{OffsetDateTime, Month};
+use crate::fs::{FileSystem, RealFileSystem, DryRunFileSystem};
 
 #[derive(Debug, Clone)]
 pub enum YearOrDay {
@@ -73,53 +72,6 @@ mod tests {
     }
 }"###;
 
-#[cfg_attr(test, mockall::automock)]
-trait FileSystem {
-    fn create_dir_all(&self, path: &Path) -> std::io::Result<()>;
-    fn exists(&self, path: &Path) -> bool;
-    fn write_file(&self, path: &Path, contents: &str) -> std::io::Result<()>;
-}
-
-struct RealFileSystem;
-
-impl FileSystem for RealFileSystem {
-    fn create_dir_all(&self, path: &Path) -> std::io::Result<()> {
-        fs::create_dir_all(path)
-    }
-
-    fn exists(&self, path: &Path) -> bool {
-        path.exists()
-    }
-
-    fn write_file(&self, path: &Path, contents: &str) -> std::io::Result<()> {
-        let mut file = File::create(path)?;
-        write!(file, "{}", contents)
-    }
-}
-
-struct DryRunFileSystem;
-
-impl FileSystem for DryRunFileSystem {
-    fn create_dir_all(&self, path: &Path) -> std::io::Result<()> {
-        println!("Would create directory: {}", path.display());
-        Ok(())
-    }
-
-    fn exists(&self, path: &Path) -> bool {
-        if path.exists() {
-            println!("File exists: {}", path.display());
-            true
-        } else {
-            false
-        }
-    }
-
-    fn write_file(&self, path: &Path, _contents: &str) -> std::io::Result<()> {
-        println!("Would create file: {}", path.display());
-        Ok(())
-    }
-}
-
 fn get_solution_paths(year: u16, day: u8) -> (PathBuf, PathBuf) {
     let solutions_dir = PathBuf::from("src")
         .join("solutions")
@@ -163,6 +115,7 @@ pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>, dry_run: bool
 mod tests {
     use super::*;
     use mockall::predicate::*;
+    use crate::fs::MockFileSystem;
 
     #[test]
     fn test_year_day_parsing() {
