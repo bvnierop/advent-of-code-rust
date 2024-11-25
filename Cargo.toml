@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "src/aoc",
+]
+
+resolver = "2" 
