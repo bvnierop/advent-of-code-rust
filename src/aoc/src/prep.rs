@@ -131,6 +131,34 @@ fn create_files(year: u16, day: u8, fs: &dyn FileSystem, client: &dyn AdventOfCo
     create_all_files(year, day, &name, &statement, fs, client)
 }
 
+fn create_all_files(year: u16, day: u8, name: &str, statement: &str, fs: &dyn FileSystem, client: &dyn AdventOfCodeClient) 
+    -> std::io::Result<()> 
+{
+    create_file(fs, get_solution_paths(year, day, name), SOLUTION_TEMPLATE)?;
+    
+    if let Ok(org) = convert_html_to_org(statement) {
+        create_file(fs, get_problem_paths(year, day, name), &org)?;
+    }
+    
+    let (dir, sample_in, sample_out) = get_sample_paths(year, day);
+    create_file(fs, (dir.clone(), sample_in), "")?;
+    create_file(fs, (dir, sample_out), "\n\n")?;
+    
+    if let Ok(input) = client.get_problem_input(year, day) {
+        create_file(fs, get_input_paths(year, day), &input)?;
+    }
+    
+    Ok(())
+}
+
+fn create_file(fs: &dyn FileSystem, (dir, path): (PathBuf, PathBuf), contents: &str) -> std::io::Result<()> {
+    if !fs.exists(&path) {
+        fs.create_dir_all(&dir)?;
+        fs.write_file(&path, contents)?;
+    }
+    Ok(())
+}
+
 fn get_problem_info(year: u16, day: u8, client: &dyn AdventOfCodeClient) 
     -> Result<(String, String), Box<dyn std::error::Error>> 
 {
@@ -139,71 +167,6 @@ fn get_problem_info(year: u16, day: u8, client: &dyn AdventOfCodeClient)
         .unwrap_or_else(|_| "placeholder-name".to_string());
     
     Ok((statement, name))
-}
-
-fn create_all_files(year: u16, day: u8, name: &str, statement: &str, fs: &dyn FileSystem, client: &dyn AdventOfCodeClient) 
-    -> std::io::Result<()> 
-{
-    create_solution_file(year, day, name, fs)?;
-    create_problem_file(year, day, name, statement, fs)?;
-    create_sample_files(year, day, fs)?;
-    create_input_file(year, day, fs, client)?;
-    Ok(())
-}
-
-fn create_solution_file(year: u16, day: u8, name: &str, fs: &dyn FileSystem) -> std::io::Result<()> {
-    let (dir, path) = get_solution_paths(year, day, name);
-    if !fs.exists(&path) {
-        fs.create_dir_all(&dir)?;
-        fs.write_file(&path, SOLUTION_TEMPLATE)?;
-    }
-    Ok(())
-}
-
-fn create_problem_file(year: u16, day: u8, name: &str, html: &str, fs: &dyn FileSystem) -> std::io::Result<()> {
-    let (dir, path) = get_problem_paths(year, day, name);
-    if !fs.exists(&path) {
-        match convert_html_to_org(html) {
-            Ok(org) => {
-                fs.create_dir_all(&dir)?;
-                fs.write_file(&path, &org)?;
-            }
-            Err(e) => eprintln!("Failed to convert problem statement: {}", e),
-        }
-    }
-    Ok(())
-}
-
-fn create_sample_files(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Result<()> {
-    let (dir, sample_in, sample_out) = get_sample_paths(year, day);
-    
-    if !fs.exists(&sample_in) {
-        fs.create_dir_all(&dir)?;
-        fs.write_file(&sample_in, "")?;
-    }
-    
-    if !fs.exists(&sample_out) {
-        fs.create_dir_all(&dir)?;
-        fs.write_file(&sample_out, "\n\n")?;
-    }
-    
-    Ok(())
-}
-
-fn create_input_file(year: u16, day: u8, fs: &dyn FileSystem, client: &dyn AdventOfCodeClient) -> std::io::Result<()> {
-    let (dir, path) = get_input_paths(year, day);
-    
-    if !fs.exists(&path) {
-        match client.get_problem_input(year, day) {
-            Ok(input) => {
-                fs.create_dir_all(&dir)?;
-                fs.write_file(&path, &input)?;
-            }
-            Err(e) => eprintln!("Failed to download input: {}", e),
-        }
-    }
-    
-    Ok(())
 }
 
 // Path Generation
