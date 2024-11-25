@@ -1,0 +1,13 @@
+# Conventions
+
+When writing code, stick to the following conventions.
+
+## Programming language
+The programming language used shall be Rust.
+
+## Conventions
+- Write idiomatic Rust
+- Write clear, readable and verbose code over terse, dense and concise code
+- Public functions should have documentation
+- Public functions should have doc tests
+- Prefer using existing libraries over implementing features 
