@@ -19,7 +19,8 @@ This plan outlines the steps to implement the features and processes described i
 - Ensure `.gitignore` is set up to exclude input files, problem statements, and `.session`.
 
 ** Step 3: Develop Supporting Application
-*** Command: prep [0/6]
+*** Command: prep [0/7]
+- [ ] Make the `prep` command exist in CLI
 - [ ] Parse command line arguments (year, day)
 - [ ] Create solution template file
 - [ ] Create empty sample input/output files
@@ -27,14 +28,16 @@ This plan outlines the steps to implement the features and processes described i
 - [ ] Download and convert problem statement using Pandoc
 - [ ] Open editor with solution file
 
-*** Command: run [0/5]
+*** Command: run [0/6]
+- [ ] Make the `run` command exist in CLI
 - [ ] Parse command line arguments (year, day, input-file, level, solver)
 - [ ] Implement input file path resolution
 - [ ] Add solver function discovery and execution
 - [ ] Add output file verification
 - [ ] Implement runtime measurement and output formatting
 
-*** Command: submit [0/4]
+*** Command: submit [0/5]
+- [ ] Make the `submit` command exist in CLI
 - [ ] Parse command line arguments (year, day, level, solver)
 - [ ] Run solver to get answer
 - [ ] Submit answer via HTTP POST
