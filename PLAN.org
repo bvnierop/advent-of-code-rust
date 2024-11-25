@@ -29,7 +29,7 @@ This plan outlines the steps to implement the features and processes described i
 - [ ] Create empty sample input/output files
 - [ ] Download problem input using session cookie
 - [x] Download and convert problem statement using Pandoc
-- [ ] Use session cookie to download problem input if available
+- [x] Use session cookie to download problem statement if available
 - [ ] Open editor with solution file
 
 *** Command: run [0/6]
