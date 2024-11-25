@@ -19,7 +19,7 @@ This plan outlines the steps to implement the features and processes described i
 - Ensure `.gitignore` is set up to exclude input files, problem statements, and `.session`.
 
 ** Step 3: Develop Supporting Application
-*** Command: prep [9/11]
+*** Command: prep [10/11]
 - [X] Make the `prep` command exist in CLI
 - [X] Parse command line arguments (year, day)
 - [X] Add dry-run flag
@@ -27,7 +27,7 @@ This plan outlines the steps to implement the features and processes described i
 - [X] Create proper filename from problem name
 - [X] Create solution template file
 - [X] Create empty sample input/output files
-- [ ] Download problem input using session cookie
+- [X] Download problem input using session cookie
 - [X] Download and convert problem statement using Pandoc
 - [X] Use session cookie to download problem statement if available
 - [ ] Open editor with solution file

@@ -128,7 +128,7 @@ fn create_files(year: u16, day: u8, fs: &dyn FileSystem, client: &dyn AdventOfCo
         }
     };
 
-    create_all_files(year, day, &name, &statement, fs)
+    create_all_files(year, day, &name, &statement, fs, client)
 }
 
 fn get_problem_info(year: u16, day: u8, client: &dyn AdventOfCodeClient) 
@@ -141,12 +141,13 @@ fn get_problem_info(year: u16, day: u8, client: &dyn AdventOfCodeClient)
     Ok((statement, name))
 }
 
-fn create_all_files(year: u16, day: u8, name: &str, statement: &str, fs: &dyn FileSystem) 
+fn create_all_files(year: u16, day: u8, name: &str, statement: &str, fs: &dyn FileSystem, client: &dyn AdventOfCodeClient) 
     -> std::io::Result<()> 
 {
     create_solution_file(year, day, name, fs)?;
     create_problem_file(year, day, name, statement, fs)?;
     create_sample_files(year, day, fs)?;
+    create_input_file(year, day, fs, client)?;
     Ok(())
 }
 
@@ -193,6 +194,23 @@ fn create_sample_files(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Resu
     Ok(())
 }
 
+fn create_input_file(year: u16, day: u8, fs: &dyn FileSystem, client: &dyn AdventOfCodeClient) -> std::io::Result<()> {
+    let (dir, path) = get_input_paths(year, day);
+    
+    if !fs.exists(&path) {
+        match client.get_problem_input(year, day) {
+            Ok(input) => {
+                fs.create_dir_all(&dir)?;
+                fs.write_file(&path, &input)?;
+                println!("Created input file: {}", path.display());
+            }
+            Err(e) => eprintln!("Failed to download input: {}", e),
+        }
+    }
+    
+    Ok(())
+}
+
 // Path Generation
 // --------------
 
@@ -223,6 +241,15 @@ fn get_sample_paths(year: u16, day: u8) -> (PathBuf, PathBuf, PathBuf) {
     let sample_out = input_dir.join(format!("{:02}-sample.out", day));
     
     (input_dir, sample_in, sample_out)
+}
+
+fn get_input_paths(year: u16, day: u8) -> (PathBuf, PathBuf) {
+    let input_dir = PathBuf::from("input")
+        .join(year.to_string());
+    
+    let input_file = input_dir.join(format!("{:02}.in", day));
+    
+    (input_dir, input_file)
 }
 
 // Utilities
@@ -315,5 +342,11 @@ mod tests {
         let (_dir, input, output) = get_sample_paths(2024, 1);
         assert_eq!(input.file_name().unwrap(), "01-sample.in");
         assert_eq!(output.file_name().unwrap(), "01-sample.out");
+    }
+
+    #[test]
+    fn test_input_paths() {
+        let (_dir, file) = get_input_paths(2024, 1);
+        assert_eq!(file.file_name().unwrap(), "01.in");
     }
 } 

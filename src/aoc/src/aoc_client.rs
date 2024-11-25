@@ -6,6 +6,7 @@ use scraper::{Html, Selector};
 pub trait AdventOfCodeClient {
     fn get_problem_statement(&self, year: u16, day: u8) -> Result<String, Box<dyn std::error::Error>>;
     fn extract_problem_name(&self, html: &str) -> Result<String, Box<dyn std::error::Error>>;
+    fn get_problem_input(&self, year: u16, day: u8) -> Result<String, Box<dyn std::error::Error>>;
 }
 
 pub struct HttpAdventOfCodeClient {
@@ -64,6 +65,12 @@ impl AdventOfCodeClient for HttpAdventOfCodeClient {
             })
             .ok_or_else(|| "Could not find problem title".into())
     }
+
+    fn get_problem_input(&self, year: u16, day: u8) -> Result<String, Box<dyn std::error::Error>> {
+        let url = format!("https://adventofcode.com/{}/day/{}/input", year, day);
+        let response = self.client.get(&url).send()?;
+        Ok(response.text()?)
+    }
 }
 
 fn get_session_cookie() -> Option<String> {
@@ -95,6 +102,10 @@ impl AdventOfCodeClient for FakeClient {
 
     fn extract_problem_name(&self, _html: &str) -> Result<String, Box<dyn std::error::Error>> {
         Ok(self.problem_name.clone())
+    }
+
+    fn get_problem_input(&self, _year: u16, _day: u8) -> Result<String, Box<dyn std::error::Error>> {
+        Ok("fake input".to_string())
     }
 }
 
