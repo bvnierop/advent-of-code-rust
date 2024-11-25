@@ -66,11 +66,10 @@ pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>, dry_run: bool
 
 fn extract_year_and_day(first: Option<YearOrDay>, second: Option<YearOrDay>) -> (Option<u16>, Option<u8>) {
     match (first, second) {
-        (None, None) => (None, None),
+        (Some(YearOrDay::Year(y)), Some(YearOrDay::Day(d))) |
+        (Some(YearOrDay::Day(d)), Some(YearOrDay::Year(y))) => (Some(y), Some(d)),
         (Some(YearOrDay::Year(y)), None) => (Some(y), None),
         (Some(YearOrDay::Day(d)), None) => (None, Some(d)),
-        (Some(YearOrDay::Year(y)), Some(YearOrDay::Day(d))) => (Some(y), Some(d)),
-        (Some(YearOrDay::Day(d)), Some(YearOrDay::Year(y))) => (Some(y), Some(d)),
         _ => (None, None), // Invalid combinations (year+year or day+day)
     }
 }
