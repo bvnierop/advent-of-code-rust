@@ -23,8 +23,8 @@ This plan outlines the steps to implement the features and processes described i
 - [X] Make the `prep` command exist in CLI
 - [X] Parse command line arguments (year, day)
 - [x] Add dry-run flag
-- [ ] Extract problem name from website
-- [ ] Create proper filename from problem name
+- [x] Extract problem name from website
+- [x] Create proper filename from problem name
 - [X] Create solution template file
 - [ ] Create empty sample input/output files
 - [ ] Download problem input using session cookie

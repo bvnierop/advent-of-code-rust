@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 use time::{OffsetDateTime, Month};
 use crate::fs::{FileSystem, RealFileSystem, DryRunFileSystem};
+use reqwest::blocking::Client;
+use scraper::{Html, Selector};
 
 #[derive(Debug, Clone)]
 pub enum YearOrDay {
@@ -72,17 +74,56 @@ mod tests {
     }
 }"###;
 
-fn get_solution_paths(year: u16, day: u8) -> (PathBuf, PathBuf) {
+fn get_problem_name(year: u16, day: u8) -> Result<String, Box<dyn std::error::Error>> {
+    let url = format!("https://adventofcode.com/{}/day/{}", year, day);
+    let client = Client::new();
+    let response = client.get(&url).send()?;
+    let html = response.text()?;
+    
+    let document = Html::parse_document(&html);
+    let selector = Selector::parse("article.day-desc > h2").unwrap();
+    
+    document.select(&selector)
+        .next()
+        .and_then(|h2| {
+            h2.text()
+                .collect::<String>()
+                .split(':')
+                .nth(1)
+                .map(|s| s.trim().to_string())
+        })
+        .ok_or_else(|| "Could not find problem title".into())
+}
+
+fn get_solution_paths(year: u16, day: u8, name: &str) -> (PathBuf, PathBuf) {
     let solutions_dir = PathBuf::from("src")
         .join("solutions")
         .join(year.to_string());
-    let filename = format!("{:02}-{}.rs", day, "placeholder-name");
+    
+    // Convert problem name to kebab case
+    let name = name.to_lowercase()
+        .chars()
+        .map(|c| if c.is_alphanumeric() { c } else { '-' })
+        .collect::<String>()
+        .replace("--", "-")
+        .trim_matches('-')
+        .to_string();
+        
+    let filename = format!("{:02}-{}.rs", day, name);
     
     (solutions_dir.clone(), solutions_dir.join(filename))
 }
 
 fn create_solution_file(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Result<()> {
-    let (dir, path) = get_solution_paths(year, day);
+    let name = match get_problem_name(year, day) {
+        Ok(name) => name,
+        Err(e) => {
+            eprintln!("Warning: Could not fetch problem name: {}", e);
+            "placeholder-name".to_string()
+        }
+    };
+
+    let (dir, path) = get_solution_paths(year, day, &name);
 
     if fs.exists(&path) {
         return Ok(());
@@ -150,5 +191,11 @@ mod tests {
             .returning(|_, _| Ok(()));
         
         create_solution_file(year, day, &mock).unwrap();
+    }
+
+    #[test]
+    fn test_solution_paths() {
+        let (_dir, file) = get_solution_paths(2024, 1, "Test Problem Name!");
+        assert_eq!(file.file_name().unwrap(), "01-test-problem-name.rs");
     }
 } 

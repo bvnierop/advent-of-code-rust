@@ -21,6 +21,8 @@
           buildInputs = [
             toolchain
             pkgs.rust-analyzer
+            pkgs.pkg-config
+            pkgs.openssl
           ];
         };
       }
