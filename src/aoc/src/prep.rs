@@ -6,12 +6,24 @@ use scraper::{Html, Selector};
 use std::process::Command;
 use std::fs::read_to_string;
 
+// Public Interface
+// ---------------
+
 #[derive(Debug, Clone)]
 pub enum YearOrDay {
     Year(u16),
     Day(u8),
 }
 
+/// Parse a string as either a year (≥2015) or day (1-25)
+///
+/// # Examples
+/// ```
+/// # use aoc::prep::parse_year_or_day;
+/// assert!(matches!(parse_year_or_day("2024").unwrap(), YearOrDay::Year(2024)));
+/// assert!(matches!(parse_year_or_day("1").unwrap(), YearOrDay::Day(1)));
+/// assert!(parse_year_or_day("26").is_err());
+/// ```
 pub fn parse_year_or_day(arg: &str) -> Result<YearOrDay, String> {
     let num: u16 = arg.parse().map_err(|_| "Not a number".to_string())?;
     
@@ -21,6 +33,43 @@ pub fn parse_year_or_day(arg: &str) -> Result<YearOrDay, String> {
         Ok(YearOrDay::Day(num as u8))
     } else {
         Err("Invalid year or day".to_string())
+    }
+}
+
+/// Handle the prep command: prepare the environment for solving a problem
+pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>, dry_run: bool) {
+    let (year, day) = extract_year_and_day(first, second);
+    let (current_year, current_day) = get_current_advent();
+    let year = year.unwrap_or(current_year);
+    let day = day.unwrap_or(current_day);
+    
+    println!("{}Preparing environment for year {} day {}...", 
+        if dry_run { "Would be " } else { "" },
+        year, 
+        day);
+    
+    let fs: &dyn FileSystem = if dry_run { &DryRunFileSystem } else { &RealFileSystem };
+    
+    if let Err(e) = create_solution_file(year, day, fs) {
+        eprintln!("Failed to create solution file: {}", e);
+    }
+
+    if let Err(e) = create_problem_file(year, day, fs) {
+        eprintln!("Failed to create problem file: {}", e);
+    }
+}
+
+// Argument Handling
+// ----------------
+
+fn extract_year_and_day(first: Option<YearOrDay>, second: Option<YearOrDay>) -> (Option<u16>, Option<u8>) {
+    match (first, second) {
+        (None, None) => (None, None),
+        (Some(YearOrDay::Year(y)), None) => (Some(y), None),
+        (Some(YearOrDay::Day(d)), None) => (None, Some(d)),
+        (Some(YearOrDay::Year(y)), Some(YearOrDay::Day(d))) => (Some(y), Some(d)),
+        (Some(YearOrDay::Day(d)), Some(YearOrDay::Year(y))) => (Some(y), Some(d)),
+        _ => (None, None), // Invalid combinations (year+year or day+day)
     }
 }
 
@@ -37,16 +86,8 @@ fn get_current_advent() -> (u16, u8) {
     (year, day)
 }
 
-pub fn extract_year_and_day(first: Option<YearOrDay>, second: Option<YearOrDay>) -> (Option<u16>, Option<u8>) {
-    match (first, second) {
-        (None, None) => (None, None),
-        (Some(YearOrDay::Year(y)), None) => (Some(y), None),
-        (Some(YearOrDay::Day(d)), None) => (None, Some(d)),
-        (Some(YearOrDay::Year(y)), Some(YearOrDay::Day(d))) => (Some(y), Some(d)),
-        (Some(YearOrDay::Day(d)), Some(YearOrDay::Year(y))) => (Some(y), Some(d)),
-        _ => (None, None), // Invalid combinations (year+year or day+day)
-    }
-}
+// File Creation
+// ------------
 
 const SOLUTION_TEMPLATE: &str = r###"pub fn solve_level1(input: &[&str]) -> String {
     todo!("Implement solution for level 1")
@@ -75,6 +116,82 @@ mod tests {
         assert_eq!(solve_level2(&input), "expected");
     }
 }"###;
+
+fn create_solution_file(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Result<()> {
+    let name = match get_problem_name(year, day) {
+        Ok(name) => name,
+        Err(e) => {
+            eprintln!("Warning: Could not fetch problem name: {}", e);
+            "placeholder-name".to_string()
+        }
+    };
+
+    let (dir, path) = get_solution_paths(year, day, &name);
+
+    if fs.exists(&path) {
+        return Ok(());
+    }
+
+    fs.create_dir_all(&dir)?;
+    fs.write_file(&path, SOLUTION_TEMPLATE)?;
+    Ok(())
+}
+
+fn create_problem_file(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Result<()> {
+    let name = match get_problem_name(year, day) {
+        Ok(name) => name,
+        Err(e) => {
+            eprintln!("Warning: Could not fetch problem name: {}", e);
+            "placeholder-name".to_string()
+        }
+    };
+
+    let (dir, path) = get_problem_paths(year, day, &name);
+
+    if fs.exists(&path) {
+        println!("Problem statement already exists: {}", path.display());
+        return Ok(());
+    }
+
+    match get_problem_statement(year, day) {
+        Ok(html) => match convert_html_to_org(&html) {
+            Ok(org) => {
+                fs.create_dir_all(&dir)?;
+                fs.write_file(&path, &org)?;
+                println!("Created problem statement: {}", path.display());
+            }
+            Err(e) => eprintln!("Failed to convert problem statement: {}", e),
+        },
+        Err(e) => eprintln!("Failed to fetch problem statement: {}", e),
+    }
+
+    Ok(())
+}
+
+// Path Generation
+// --------------
+
+fn get_solution_paths(year: u16, day: u8, name: &str) -> (PathBuf, PathBuf) {
+    let solutions_dir = PathBuf::from("src")
+        .join("solutions")
+        .join(year.to_string());
+    
+    let filename = format!("{:02}-{}.rs", day, to_kebab_case(name));
+    
+    (solutions_dir.clone(), solutions_dir.join(filename))
+}
+
+fn get_problem_paths(year: u16, day: u8, name: &str) -> (PathBuf, PathBuf) {
+    let problems_dir = PathBuf::from("problem")
+        .join(year.to_string());
+    
+    let filename = format!("{:02}-{}.org", day, to_kebab_case(name));
+    
+    (problems_dir.clone(), problems_dir.join(filename))
+}
+
+// HTTP Client
+// ----------
 
 fn get_session_cookie() -> Option<String> {
     read_to_string(".session").ok()
@@ -136,6 +253,9 @@ fn get_problem_statement(year: u16, day: u8) -> Result<String, Box<dyn std::erro
     Ok(content)
 }
 
+// Utilities
+// --------
+
 fn convert_html_to_org(html: &str) -> Result<String, Box<dyn std::error::Error>> {
     let mut child = Command::new("pandoc")
         .arg("-f")
@@ -160,115 +280,18 @@ fn convert_html_to_org(html: &str) -> Result<String, Box<dyn std::error::Error>>
     Ok(String::from_utf8(output.stdout)?)
 }
 
-fn get_problem_paths(year: u16, day: u8, name: &str) -> (PathBuf, PathBuf) {
-    let problems_dir = PathBuf::from("problem")
-        .join(year.to_string());
-    
-    // Convert problem name to kebab case (reuse the same logic as solution files)
-    let name = name.to_lowercase()
+fn to_kebab_case(s: &str) -> String {
+    s.to_lowercase()
         .chars()
         .map(|c| if c.is_alphanumeric() { c } else { '-' })
         .collect::<String>()
         .replace("--", "-")
         .trim_matches('-')
-        .to_string();
-        
-    let filename = format!("{:02}-{}.org", day, name);
-    
-    (problems_dir.clone(), problems_dir.join(filename))
+        .to_string()
 }
 
-fn create_problem_file(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Result<()> {
-    let name = match get_problem_name(year, day) {
-        Ok(name) => name,
-        Err(e) => {
-            eprintln!("Warning: Could not fetch problem name: {}", e);
-            "placeholder-name".to_string()
-        }
-    };
-
-    let (dir, path) = get_problem_paths(year, day, &name);
-
-    if fs.exists(&path) {
-        println!("Problem statement already exists: {}", path.display());
-        return Ok(());
-    }
-
-    match get_problem_statement(year, day) {
-        Ok(html) => match convert_html_to_org(&html) {
-            Ok(org) => {
-                fs.create_dir_all(&dir)?;
-                fs.write_file(&path, &org)?;
-                println!("Created problem statement: {}", path.display());
-            }
-            Err(e) => eprintln!("Failed to convert problem statement: {}", e),
-        },
-        Err(e) => eprintln!("Failed to fetch problem statement: {}", e),
-    }
-
-    Ok(())
-}
-
-fn get_solution_paths(year: u16, day: u8, name: &str) -> (PathBuf, PathBuf) {
-    let solutions_dir = PathBuf::from("src")
-        .join("solutions")
-        .join(year.to_string());
-    
-    // Convert problem name to kebab case
-    let name = name.to_lowercase()
-        .chars()
-        .map(|c| if c.is_alphanumeric() { c } else { '-' })
-        .collect::<String>()
-        .replace("--", "-")
-        .trim_matches('-')
-        .to_string();
-        
-    let filename = format!("{:02}-{}.rs", day, name);
-    
-    (solutions_dir.clone(), solutions_dir.join(filename))
-}
-
-fn create_solution_file(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Result<()> {
-    let name = match get_problem_name(year, day) {
-        Ok(name) => name,
-        Err(e) => {
-            eprintln!("Warning: Could not fetch problem name: {}", e);
-            "placeholder-name".to_string()
-        }
-    };
-
-    let (dir, path) = get_solution_paths(year, day, &name);
-
-    if fs.exists(&path) {
-        return Ok(());
-    }
-
-    fs.create_dir_all(&dir)?;
-    fs.write_file(&path, SOLUTION_TEMPLATE)?;
-    Ok(())
-}
-
-pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>, dry_run: bool) {
-    let (year, day) = extract_year_and_day(first, second);
-    let (current_year, current_day) = get_current_advent();
-    let year = year.unwrap_or(current_year);
-    let day = day.unwrap_or(current_day);
-    
-    println!("{}Preparing environment for year {} day {}...", 
-        if dry_run { "Would be " } else { "" },
-        year, 
-        day);
-    
-    let fs: &dyn FileSystem = if dry_run { &DryRunFileSystem } else { &RealFileSystem };
-    
-    if let Err(e) = create_solution_file(year, day, fs) {
-        eprintln!("Failed to create solution file: {}", e);
-    }
-
-    if let Err(e) = create_problem_file(year, day, fs) {
-        eprintln!("Failed to create problem file: {}", e);
-    }
-}
+// Tests
+// -----
 
 #[cfg(test)]
 mod tests {

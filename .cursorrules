@@ -10,4 +10,7 @@ The programming language used shall be Rust.
 - Write clear, readable and verbose code over terse, dense and concise code
 - Public functions should have documentation
 - Public functions should have doc tests
-- Prefer using existing libraries over implementing features 
+- Prefer using existing libraries over implementing features
+- Embrace SOLID principles
+- Keep cognitive complexity low
+- Only use mocks at system boundaries (filesystem, network, time, etc)
