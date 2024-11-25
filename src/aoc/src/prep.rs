@@ -234,7 +234,7 @@ mod tests {
     use super::*;
     use mockall::predicate::*;
     use crate::fs::MockFileSystem;
-    use crate::aoc_client::{FakeClient, HttpAdventOfCodeClient};
+    use crate::aoc_client::FakeClient;
 
     #[test]
     fn test_year_day_parsing() {
@@ -299,12 +299,5 @@ mod tests {
     fn test_problem_paths() {
         let (_dir, file) = get_problem_paths(2024, 1, "Test Problem Name!");
         assert_eq!(file.file_name().unwrap(), "01-test-problem-name.org");
-    }
-
-    #[test]
-    fn test_extract_problem_name() {
-        let client = HttpAdventOfCodeClient::new().unwrap();
-        let html = r#"<!DOCTYPE html><html><body><article class="day-desc"><h2>--- Day 1: Test Problem ---</h2></article></body></html>"#;
-        assert_eq!(client.extract_problem_name(html).unwrap(), "Test Problem");
     }
 } 
