@@ -1,0 +1,203 @@
+#+title: Advent of Code - Rust
+
+* Advent of Code - Rust
+This repository contains my solutions to [[https://adventofcode.com/][Advent of Code]] in Rust. Every year or
+two I switch language for Advent of Code, learning one I've not used before..
+This time, 2024, it's Rust.
+
+** Advent of Code
+Advent of Code is a yearly programming advent calendar. Every day from december
+1st to december 25th there are two problems. The second one unlocks after the
+first one has been completed.
+
+Participants can come up with solutions in any way or programming language they
+desire. Each participant gets personalized input and has to submit only the
+solution for their input.
+
+** Dependency management
+In order to keep the developer system clean, this project manages its own
+dependencies using Nix Flakes and Direnv.
+** Folder structure
+1. ~src/aoc~: The supporting application's source code
+2. ~src/solutions/<year>~: The solutions, grouped by year
+3. ~src/aoc-lib~: Common library code. This grows over time
+4. ~input/<year>~: Input files grouped by year
+5. ~problem/<year>~: Problem statements grouped by year
+6. ~README.org~: This file
+7. ~CONVENTIONS.org~: Coding conventions
+8. ~.session~: Advent of Code session cookie
+9. ~flake.nix / flake.lock / .envrc~: Dependency management
+
+Solution source files are named after the day and the problem name, like this:
+~src/solutions/2010/09-hyphenated-problem-name.rs~. Input files are named
+~{zero-padded-day}.in~.
+
+Problem statements are in ~org-mode~ format.
+
+Inputs and problem statements are excluded from git. The file ~.session~ is
+excluded from git.
+
+** Supporting Application
+This repository comes with a supporting command line application for preparing,
+running and benchmarking problems.
+
+*** Running a problem: aoc run
+#+begin_src bash
+./advent-of-code run [year] [day] [input-file] [--level 1/2] [--solver fn]
+#+end_src
+
+Runs a solution for the given year and day, against the given input file. None
+of the arguments are mandatory. Missed arguments are inferred.
+
+The order of the arguments should not matter. After all, there can be no
+colision between a year, a day (number between 1 and 25) or a filename.
+
+If an input-file is given, it's a suffix for the inferred name. That is, given
+the command ~advent-of-code run 2010 12 test~, the input file would be
+~input/2010/12-test.in~.
+
+If a level is specified, only run the solver for that level. If a solver function
+is given, only run that function. It should be possible to have more than one
+solver per puzzle level.
+
+**** Solvers
+Solver functions should be marked and registered with an attribute:
+#+begin_src rust
+mod aoc_2010_3 {
+        #[advent-of-code(2010, 3, 1)] // year, day, puzzle level
+        pub fn solve_level1(...) { }
+
+        #[advent-of-code(2010, 3, 1, false)] // year, day, puzzle level, run/don't run: false skips
+        pub fn alternative_solution_to_level1(...) { }
+
+        #[advent-of-code(2010, 3, 2)] // year, day, puzzle level
+        pub fn solve_level2(...) { }
+}
+#+end_src
+By default all solvers for a day should be executed.
+
+**** Benchmarking
+When running a solution its runtime is should be outputted below the answer.
+
+**** Verification
+If the input folder contains a file matching the input name with the ~out~
+extension rather than ~in~ (ex: ~input/2010/12-test.out~) then the output of the
+program is verified against the contents of that file. Trailing newlines are
+ignored.
+
+The expected output of the two puzzle levels is separated by two empty lines.
+
+**** Output
+The output should have the following format:
+
+#+begin_quote
+Running solver for {year}-{12}-{day}, level 1: {function-name}
+{output}
+SUCCESS! # if and only if there was an out-file and the contents match
+Solver ran in {hours}:{minutes}:{seconds}.{nanoseconds}.
+
+Running solver for {year}-{12}-{day}, level 2: {function-name}
+{output}
+FAILED! Expected `{outfile}` but got `{actual}` # if and only if there was an out-file and the contents do not match
+Solver ran in {hours}:{minutes}:{seconds}.{nanoseconds}.
+#+end_quote
+
+*** Preparing a problem
+#+begin_src bash
+./advent-of-code prep [year] [day]
+#+end_src
+This command helps to prepare for solving the problem of the day. It creates a
+template solution file and downloads the input. It will also create empty sample
+input and output files for testing purposes. Prefarably it would also download
+the sample input and output, but these are difficult to extract from the problem
+statement. Now that AI is more common, perhaps this has become more feasable.
+Finally it opens the user's preferred editor with the solution's source file
+open.
+
+If any of the files already exist, they are skipped. The process will continue
+where possible.
+
+All command line arguments are optional and inferred if ommitted.
+
+Here's the initial solution template.
+#+begin_src rust
+#[advent-of-code(2010, 3, 1)]
+pub fn solve_level1(input: &[&str]) {
+}
+
+#[advent-of-code(2010, 3, 2)]
+pub fn solve_level2(input: &[&str]) {
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+}
+
+**** Extracting the problem name
+The URL for an Advent of Code problem has the following structure:
+~https://adventofcode.com/{year}/day/{day}~
+
+Note that while all our file names and command line output should be zero
+padded, the URL has no zero-padding.
+
+The name of the problem is in the very first ~<h2>~ tag, directly following
+~<article class="day-desc">~. It has the following structure: ~--- Day {day}:
+{title} ---~.
+
+**** Downloading the problem statement
+The URL for an Advent of Code problem has the following structure:
+~https://adventofcode.com/{year}/day/{day}~
+
+Note that while all our file names and command line output should be zero
+padded, the URL has no zero-padding.
+
+The problem statement starts after the tag ~<article class="day-desc">~. Level
+two starts with the same tag. Note that level 2 is not available until level one
+has been succesfully solved. This means that the ~prep~ command should add that
+to the downloaded problem statement if it's not there yet.
+
+Changes made to the file manually should not be overwritten. Therefore level 2
+should be appended, but not the entire file overwritten.
+
+For converting the problem statement from HTML to ~org~, we should use Pandoc.
+
+**** Downloading the input
+The URL for the puzzle input has the following structure:
+~https://adventofcode.com/{year}/day/{day}/input~
+
+Note that while all our file names and command line output should be zero
+padded, the URL has no zero-padding.
+
+Since participants get personalized input we need to be authenticated to
+download the puzzle input. Authentication can be done by setting the HTTP header
+~Cookie~. The format of the header is ~session={hash}~. We'll store the session
+hash in the ~.session~ file and emit a warning if that file does not exist.
+
+*** Submitting a problem
+#+begin_src bash
+./advent-of-code prep [year] [day] <level> [--solver fn]
+#+end_src
+This command submits the problem solution for the given level. The level
+argument is mandatory because otherwise we don't which level to submit.
+
+The ~solver~ argument chooses which solver to run in case there are several.
+This works the same way as ~run~.
+
+The URL for submitting the problem has the following structure:
+~https://adventofcode.com/{year}/day/{day}/answer~
+
+Note that while all our file names and command line output should be zero
+padded, the URL has no zero-padding.
+
+It's an HTTP post call with the answer in a form:
+|--------+--------+--------------------------------------------|
+| Field  | Format | Description                                |
+|--------+--------+--------------------------------------------|
+| level  | string | The puzzle level (1 or 2)                  |
+| answer | string | The given answer as provided by the solver |
+|--------+--------+--------------------------------------------|
+
+Note that this call will return ~200 OK~ even if the answer is /wrong/.
+Therefore the content, converted to play text, should be displayed on the
+command line.
