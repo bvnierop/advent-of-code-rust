@@ -26,10 +26,19 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use clap::CommandFactory;
 
     #[test]
     fn verify_cli() {
-        use clap::CommandFactory;
         Cli::command().debug_assert()
+    }
+
+    #[test]
+    fn verify_prep_command_exists() {
+        let cmd = Cli::command();
+        assert!(
+            cmd.get_subcommands().any(|c| c.get_name() == "prep"),
+            "prep command should exist"
+        );
     }
 }
