@@ -209,42 +209,70 @@ fn create_input_file(year: u16, day: u8, fs: &dyn FileSystem, client: &dyn Adven
 // Path Generation
 // --------------
 
+struct FileConfig {
+    base_dir: &'static str,
+    extension: &'static str,
+    name_format: NameFormat,
+}
+
+enum NameFormat {
+    WithProblemName(String),  // {day}-{name}.{ext}
+    Sample,                   // {day}-sample.{ext}
+    Plain,                    // {day}.{ext}
+}
+
+fn get_file_path(year: u16, day: u8, config: FileConfig) -> (PathBuf, PathBuf) {
+    let base_dir = PathBuf::from(config.base_dir).join(year.to_string());
+    
+    let filename = match config.name_format {
+        NameFormat::WithProblemName(name) => {
+            format!("{:02}-{}.{}", day, to_kebab_case(&name), config.extension)
+        },
+        NameFormat::Sample => format!("{:02}-sample.{}", day, config.extension),
+        NameFormat::Plain => format!("{:02}.{}", day, config.extension),
+    };
+    
+    (base_dir.clone(), base_dir.join(filename))
+}
+
 fn get_solution_paths(year: u16, day: u8, name: &str) -> (PathBuf, PathBuf) {
-    let solutions_dir = PathBuf::from("src")
-        .join("solutions")
-        .join(year.to_string());
-    
-    let filename = format!("{:02}-{}.rs", day, to_kebab_case(name));
-    
-    (solutions_dir.clone(), solutions_dir.join(filename))
+    get_file_path(year, day, FileConfig {
+        base_dir: "src/solutions",
+        extension: "rs",
+        name_format: NameFormat::WithProblemName(name.to_string()),
+    })
 }
 
 fn get_problem_paths(year: u16, day: u8, name: &str) -> (PathBuf, PathBuf) {
-    let problems_dir = PathBuf::from("problem")
-        .join(year.to_string());
-    
-    let filename = format!("{:02}-{}.org", day, to_kebab_case(name));
-    
-    (problems_dir.clone(), problems_dir.join(filename))
-}
-
-fn get_sample_paths(year: u16, day: u8) -> (PathBuf, PathBuf, PathBuf) {
-    let input_dir = PathBuf::from("input")
-        .join(year.to_string());
-    
-    let sample_in = input_dir.join(format!("{:02}-sample.in", day));
-    let sample_out = input_dir.join(format!("{:02}-sample.out", day));
-    
-    (input_dir, sample_in, sample_out)
+    get_file_path(year, day, FileConfig {
+        base_dir: "problem",
+        extension: "org",
+        name_format: NameFormat::WithProblemName(name.to_string()),
+    })
 }
 
 fn get_input_paths(year: u16, day: u8) -> (PathBuf, PathBuf) {
-    let input_dir = PathBuf::from("input")
-        .join(year.to_string());
+    get_file_path(year, day, FileConfig {
+        base_dir: "input",
+        extension: "in",
+        name_format: NameFormat::Plain,
+    })
+}
+
+fn get_sample_paths(year: u16, day: u8) -> (PathBuf, PathBuf, PathBuf) {
+    let (dir, sample_in) = get_file_path(year, day, FileConfig {
+        base_dir: "input",
+        extension: "in",
+        name_format: NameFormat::Sample,
+    });
     
-    let input_file = input_dir.join(format!("{:02}.in", day));
+    let (_dir, sample_out) = get_file_path(year, day, FileConfig {
+        base_dir: "input",
+        extension: "out",
+        name_format: NameFormat::Sample,
+    });
     
-    (input_dir, input_file)
+    (dir, sample_in, sample_out)
 }
 
 // Utilities
