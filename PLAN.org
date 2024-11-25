@@ -22,7 +22,7 @@ This plan outlines the steps to implement the features and processes described i
 *** Command: prep [3/10]
 - [X] Make the `prep` command exist in CLI
 - [X] Parse command line arguments (year, day)
-- [ ] Add dry-run flag
+- [x] Add dry-run flag
 - [ ] Extract problem name from website
 - [ ] Create proper filename from problem name
 - [X] Create solution template file
