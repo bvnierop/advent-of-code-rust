@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use time::{OffsetDateTime, Month};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -21,12 +22,30 @@ enum Commands {
     },
 }
 
+fn get_current_advent() -> (u16, u8) {
+    let now = OffsetDateTime::now_utc();
+    let year = now.year() as u16;
+    
+    // Only return current day if we're in December and the day is 1-25
+    let day = if now.month() == Month::December && (1..=25).contains(&now.day()) {
+        now.day() as u8
+    } else {
+        1
+    };
+    
+    (year, day)
+}
+
 fn main() {
     let cli = Cli::parse();
 
     match cli.command {
         Commands::Prep { year, day } => {
-            println!("Preparing environment for year {:?} day {:?}...", year, day);
+            let (current_year, current_day) = get_current_advent();
+            let year = year.unwrap_or(current_year);
+            let day = day.unwrap_or(current_day);
+            
+            println!("Preparing environment for year {} day {}...", year, day);
         }
     }
 }
