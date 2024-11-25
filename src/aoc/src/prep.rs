@@ -1,3 +1,6 @@
+use std::fs::{self, File};
+use std::io::Write;
+use std::path::PathBuf;
 use time::{OffsetDateTime, Month};
 
 #[derive(Debug, Clone)]
@@ -33,13 +36,62 @@ fn get_current_advent() -> (u16, u8) {
 
 pub fn extract_year_and_day(first: Option<YearOrDay>, second: Option<YearOrDay>) -> (Option<u16>, Option<u8>) {
     match (first, second) {
-        (Option::None, Option::None) => (None, None),
-        (Some(YearOrDay::Year(y)), Option::None) => (Some(y), None),
-        (Some(YearOrDay::Day(d)), Option::None) => (None, Some(d)),
+        (None, None) => (None, None),
+        (Some(YearOrDay::Year(y)), None) => (Some(y), None),
+        (Some(YearOrDay::Day(d)), None) => (None, Some(d)),
         (Some(YearOrDay::Year(y)), Some(YearOrDay::Day(d))) => (Some(y), Some(d)),
         (Some(YearOrDay::Day(d)), Some(YearOrDay::Year(y))) => (Some(y), Some(d)),
         _ => (None, None), // Invalid combinations (year+year or day+day)
     }
+}
+
+const SOLUTION_TEMPLATE: &str = r###"pub fn solve_level1(input: &[&str]) -> String {
+    todo!("Implement solution for level 1")
+}
+
+pub fn solve_level2(input: &[&str]) -> String {
+    todo!("Implement solution for level 2")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const EXAMPLE: &str = r#"
+"#;
+
+    #[test]
+    fn test_level1() {
+        let input: Vec<_> = EXAMPLE.lines().collect();
+        assert_eq!(solve_level1(&input), "expected");
+    }
+
+    #[test]
+    fn test_level2() {
+        let input: Vec<_> = EXAMPLE.lines().collect();
+        assert_eq!(solve_level2(&input), "expected");
+    }
+}"###;
+
+fn create_solution_file(year: u16, day: u8) -> std::io::Result<()> {
+    let solutions_dir = PathBuf::from("src")
+        .join("solutions")
+        .join(year.to_string());
+    
+    fs::create_dir_all(&solutions_dir)?;
+    
+    let filename = format!("{:02}-{}.rs", day, "placeholder-name");
+    let path = solutions_dir.join(filename);
+    
+    if path.exists() {
+        println!("Solution file already exists: {}", path.display());
+        return Ok(());
+    }
+
+    let mut file = File::create(&path)?;
+    write!(file, "{}", SOLUTION_TEMPLATE)?;
+    println!("Created solution file: {}", path.display());
+    Ok(())
 }
 
 pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>) {
@@ -49,11 +101,16 @@ pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>) {
     let day = day.unwrap_or(current_day);
     
     println!("Preparing environment for year {} day {}...", year, day);
+    
+    if let Err(e) = create_solution_file(year, day) {
+        eprintln!("Failed to create solution file: {}", e);
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
 
     #[test]
     fn test_year_day_parsing() {
@@ -62,5 +119,24 @@ mod tests {
         assert!(matches!(parse_year_or_day("25").unwrap(), YearOrDay::Day(25)));
         assert!(parse_year_or_day("26").is_err());
         assert!(parse_year_or_day("2014").is_err());
+    }
+
+    #[test]
+    fn test_create_solution_file() {
+        let year = 2024;
+        let day = 1;
+        let dir = PathBuf::from("src/solutions").join(year.to_string());
+        let file = dir.join("01-placeholder-name.rs");
+        
+        // Clean up from previous test runs if needed
+        let _ = fs::remove_file(&file);
+        let _ = fs::remove_dir(&dir);
+        
+        create_solution_file(year, day).unwrap();
+        assert!(file.exists(), "Solution file should exist");
+        
+        // Clean up
+        let _ = fs::remove_file(file);
+        let _ = fs::remove_dir(dir);
     }
 } 
