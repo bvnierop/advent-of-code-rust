@@ -3,4 +3,11 @@
 # Rust build directories
 target/
 debug/
-release/ 
+release/
+
+# Problem inputs and statements
+input/
+problem/
+
+# Session cookie
+.session 
