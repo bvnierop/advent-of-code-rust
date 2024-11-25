@@ -120,25 +120,32 @@ mod tests {
 }"###;
 
 fn create_files(year: u16, day: u8, fs: &dyn FileSystem, client: &dyn AdventOfCodeClient) -> std::io::Result<()> {
-    let statement = match client.get_problem_statement(year, day) {
-        Ok(html) => html,
+    let (statement, name) = match get_problem_info(year, day, client) {
+        Ok((s, n)) => (s, n),
         Err(e) => {
-            eprintln!("Failed to fetch problem statement: {}", e);
+            eprintln!("Failed to get problem info: {}", e);
             return Ok(());
         }
     };
 
-    let name = match client.extract_problem_name(&statement) {
-        Ok(name) => name,
-        Err(e) => {
-            eprintln!("Warning: Could not extract problem name: {}", e);
-            "placeholder-name".to_string()
-        }
-    };
+    create_all_files(year, day, &name, &statement, fs)
+}
 
-    create_solution_file(year, day, &name, fs)?;
-    create_problem_file(year, day, &name, &statement, fs)?;
+fn get_problem_info(year: u16, day: u8, client: &dyn AdventOfCodeClient) 
+    -> Result<(String, String), Box<dyn std::error::Error>> 
+{
+    let statement = client.get_problem_statement(year, day)?;
+    let name = client.extract_problem_name(&statement)
+        .unwrap_or_else(|_| "placeholder-name".to_string());
+    
+    Ok((statement, name))
+}
 
+fn create_all_files(year: u16, day: u8, name: &str, statement: &str, fs: &dyn FileSystem) 
+    -> std::io::Result<()> 
+{
+    create_solution_file(year, day, name, fs)?;
+    create_problem_file(year, day, name, statement, fs)?;
     Ok(())
 }
 
