@@ -8,11 +8,11 @@ pub trait AdventOfCodeClient {
     fn extract_problem_name(&self, html: &str) -> Result<String, Box<dyn std::error::Error>>;
 }
 
-pub struct RealClient {
+pub struct HttpAdventOfCodeClient {
     client: Client,
 }
 
-impl RealClient {
+impl HttpAdventOfCodeClient {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let client = if let Some(session) = get_session_cookie() {
             let cookie = format!("session={}", session);
@@ -31,7 +31,7 @@ impl RealClient {
     }
 }
 
-impl AdventOfCodeClient for RealClient {
+impl AdventOfCodeClient for HttpAdventOfCodeClient {
     fn get_problem_statement(&self, year: u16, day: u8) -> Result<String, Box<dyn std::error::Error>> {
         let url = format!("https://adventofcode.com/{}/day/{}", year, day);
         let response = self.client.get(&url).send()?;
@@ -104,7 +104,7 @@ mod tests {
 
     #[test]
     fn test_extract_problem_name() {
-        let client = RealClient::new().unwrap();
+        let client = HttpAdventOfCodeClient::new().unwrap();
         let html = r#"<!DOCTYPE html><html><body><article class="day-desc"><h2>--- Day 1: Test Problem ---</h2></article></body></html>"#;
         assert_eq!(client.extract_problem_name(html).unwrap(), "Test Problem");
     }

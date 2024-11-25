@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use time::{OffsetDateTime, Month};
 use crate::fs::{FileSystem, RealFileSystem, DryRunFileSystem};
-use crate::aoc_client::{AdventOfCodeClient, RealClient};
+use crate::aoc_client::{AdventOfCodeClient, HttpAdventOfCodeClient};
 use std::process::Command;
 
 // Public Interface
@@ -48,7 +48,7 @@ pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>, dry_run: bool
     
     let fs: &dyn FileSystem = if dry_run { &DryRunFileSystem } else { &RealFileSystem };
     
-    let client = match RealClient::new() {
+    let client = match HttpAdventOfCodeClient::new() {
         Ok(client) => client,
         Err(e) => {
             eprintln!("Failed to create AoC client: {}", e);
@@ -234,7 +234,7 @@ mod tests {
     use super::*;
     use mockall::predicate::*;
     use crate::fs::MockFileSystem;
-    use crate::aoc_client::FakeClient;
+    use crate::aoc_client::{FakeClient, HttpAdventOfCodeClient};
 
     #[test]
     fn test_year_day_parsing() {
@@ -303,7 +303,7 @@ mod tests {
 
     #[test]
     fn test_extract_problem_name() {
-        let client = RealClient::new().unwrap();
+        let client = HttpAdventOfCodeClient::new().unwrap();
         let html = r#"<!DOCTYPE html><html><body><article class="day-desc"><h2>--- Day 1: Test Problem ---</h2></article></body></html>"#;
         assert_eq!(client.extract_problem_name(html).unwrap(), "Test Problem");
     }
