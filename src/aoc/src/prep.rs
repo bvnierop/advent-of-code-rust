@@ -97,31 +97,47 @@ impl FileSystem for RealFileSystem {
     }
 }
 
-fn create_solution_file(year: u16, day: u8, fs: &impl FileSystem, dry_run: bool) -> std::io::Result<()> {
+struct DryRunFileSystem;
+
+impl FileSystem for DryRunFileSystem {
+    fn create_dir_all(&self, path: &Path) -> std::io::Result<()> {
+        println!("Would create directory: {}", path.display());
+        Ok(())
+    }
+
+    fn exists(&self, path: &Path) -> bool {
+        if path.exists() {
+            println!("File exists: {}", path.display());
+            true
+        } else {
+            false
+        }
+    }
+
+    fn write_file(&self, path: &Path, _contents: &str) -> std::io::Result<()> {
+        println!("Would create file: {}", path.display());
+        Ok(())
+    }
+}
+
+fn get_solution_paths(year: u16, day: u8) -> (PathBuf, PathBuf) {
     let solutions_dir = PathBuf::from("src")
         .join("solutions")
         .join(year.to_string());
-    
-    if dry_run {
-        println!("Would create directory: {}", solutions_dir.display());
-    } else {
-        fs.create_dir_all(&solutions_dir)?;
-    }
-    
     let filename = format!("{:02}-{}.rs", day, "placeholder-name");
-    let path = solutions_dir.join(filename);
     
+    (solutions_dir.clone(), solutions_dir.join(filename))
+}
+
+fn create_solution_file(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Result<()> {
+    let (dir, path) = get_solution_paths(year, day);
+
     if fs.exists(&path) {
-        println!("Solution file already exists: {}", path.display());
         return Ok(());
     }
 
-    if dry_run {
-        println!("Would create file: {}", path.display());
-    } else {
-        fs.write_file(&path, SOLUTION_TEMPLATE)?;
-        println!("Created solution file: {}", path.display());
-    }
+    fs.create_dir_all(&dir)?;
+    fs.write_file(&path, SOLUTION_TEMPLATE)?;
     Ok(())
 }
 
@@ -136,7 +152,9 @@ pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>, dry_run: bool
         year, 
         day);
     
-    if let Err(e) = create_solution_file(year, day, &RealFileSystem, dry_run) {
+    let fs: &dyn FileSystem = if dry_run { &DryRunFileSystem } else { &RealFileSystem };
+    
+    if let Err(e) = create_solution_file(year, day, fs) {
         eprintln!("Failed to create solution file: {}", e);
     }
 }
@@ -178,23 +196,6 @@ mod tests {
             .times(1)
             .returning(|_, _| Ok(()));
         
-        create_solution_file(year, day, &mock, false).unwrap();
-    }
-
-    #[test]
-    fn test_create_solution_file_dry_run() {
-        let year = 2024;
-        let day = 1;
-        let expected_dir = PathBuf::from("src/solutions/2024");
-        let expected_file = expected_dir.join("01-placeholder-name.rs");
-        
-        let mut mock = MockFileSystem::new();
-        mock.expect_exists()
-            .with(eq(expected_file))
-            .times(1)
-            .return_const(false);
-        
-        // No other filesystem operations should be called
-        create_solution_file(year, day, &mock, true).unwrap();
+        create_solution_file(year, day, &mock).unwrap();
     }
 } 
