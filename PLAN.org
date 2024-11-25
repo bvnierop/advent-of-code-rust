@@ -28,7 +28,8 @@ This plan outlines the steps to implement the features and processes described i
 - [X] Create solution template file
 - [ ] Create empty sample input/output files
 - [ ] Download problem input using session cookie
-- [ ] Download and convert problem statement using Pandoc
+- [x] Download and convert problem statement using Pandoc
+- [ ] Use session cookie to download problem input if available
 - [ ] Open editor with solution file
 
 *** Command: run [0/6]
