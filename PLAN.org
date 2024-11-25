@@ -19,10 +19,26 @@ This plan outlines the steps to implement the features and processes described i
 - Ensure `.gitignore` is set up to exclude input files, problem statements, and `.session`.
 
 ** Step 3: Develop Supporting Application
-- Implement the command-line application with the following commands:
-  - `run`: Execute solutions with optional parameters for year, day, input file, level, and solver function.
-  - `prep`: Prepare the environment for a new problem, including template creation and input download.
-  - `submit`: Submit solutions with specified level and solver function.
+*** Command: prep [0/6]
+- [ ] Parse command line arguments (year, day)
+- [ ] Create solution template file
+- [ ] Create empty sample input/output files
+- [ ] Download problem input using session cookie
+- [ ] Download and convert problem statement using Pandoc
+- [ ] Open editor with solution file
+
+*** Command: run [0/5]
+- [ ] Parse command line arguments (year, day, input-file, level, solver)
+- [ ] Implement input file path resolution
+- [ ] Add solver function discovery and execution
+- [ ] Add output file verification
+- [ ] Implement runtime measurement and output formatting
+
+*** Command: submit [0/4]
+- [ ] Parse command line arguments (year, day, level, solver)
+- [ ] Run solver to get answer
+- [ ] Submit answer via HTTP POST
+- [ ] Parse and display submission response
 
 ** Step 4: Implement Solver Function Registration
 - Define a macro or attribute to register solver functions with metadata (year, day, level).
