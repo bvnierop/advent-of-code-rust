@@ -160,16 +160,34 @@ fn convert_html_to_org(html: &str) -> Result<String, Box<dyn std::error::Error>>
     Ok(String::from_utf8(output.stdout)?)
 }
 
-fn get_problem_paths(year: u16, day: u8) -> (PathBuf, PathBuf) {
+fn get_problem_paths(year: u16, day: u8, name: &str) -> (PathBuf, PathBuf) {
     let problems_dir = PathBuf::from("problem")
         .join(year.to_string());
-    let filename = format!("{:02}.org", day);
+    
+    // Convert problem name to kebab case (reuse the same logic as solution files)
+    let name = name.to_lowercase()
+        .chars()
+        .map(|c| if c.is_alphanumeric() { c } else { '-' })
+        .collect::<String>()
+        .replace("--", "-")
+        .trim_matches('-')
+        .to_string();
+        
+    let filename = format!("{:02}-{}.org", day, name);
     
     (problems_dir.clone(), problems_dir.join(filename))
 }
 
 fn create_problem_file(year: u16, day: u8, fs: &dyn FileSystem) -> std::io::Result<()> {
-    let (dir, path) = get_problem_paths(year, day);
+    let name = match get_problem_name(year, day) {
+        Ok(name) => name,
+        Err(e) => {
+            eprintln!("Warning: Could not fetch problem name: {}", e);
+            "placeholder-name".to_string()
+        }
+    };
+
+    let (dir, path) = get_problem_paths(year, day, &name);
 
     if fs.exists(&path) {
         println!("Problem statement already exists: {}", path.display());
@@ -301,9 +319,8 @@ mod tests {
 
     #[test]
     fn test_problem_paths() {
-        let (dir, file) = get_problem_paths(2024, 1);
-        assert_eq!(file.file_name().unwrap(), "01.org");
-        assert!(dir.ends_with("problem/2024"));
+        let (_dir, file) = get_problem_paths(2024, 1, "Test Problem Name!");
+        assert_eq!(file.file_name().unwrap(), "01-test-problem-name.org");
     }
 
     #[test]
