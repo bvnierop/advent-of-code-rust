@@ -46,7 +46,7 @@ pub fn handle(first: Option<YearOrDay>, second: Option<YearOrDay>, dry_run: bool
         year, 
         day);
     
-    let fs: &dyn FileSystem = if dry_run { &DryRunFileSystem } else { &RealFileSystem };
+    let fs: &dyn FileSystem = if dry_run { &DryRunFileSystem::new() } else { &RealFileSystem };
     
     match HttpAdventOfCodeClient::new() {
         Ok(client) => {

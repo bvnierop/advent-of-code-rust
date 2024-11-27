@@ -8,6 +8,7 @@ clap = { version = "4.5", features = ["derive"] }
 time = "0.3"
 reqwest = { version = "0.11", features = ["blocking"] }
 scraper = "0.18"
+heck = "0.4"
 
 [dev-dependencies]
 mockall = "0.12"

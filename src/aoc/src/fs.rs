@@ -1,6 +1,9 @@
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::Path;
+use std::collections::HashSet;
+use std::path::PathBuf;
+use std::cell::RefCell;
 
 #[cfg_attr(test, mockall::automock)]
 pub trait FileSystem {
@@ -33,17 +36,33 @@ impl FileSystem for RealFileSystem {
     }
 }
 
-pub struct DryRunFileSystem;
+pub struct DryRunFileSystem {
+    created_paths: RefCell<HashSet<PathBuf>>,
+}
+
+impl Default for DryRunFileSystem {
+    fn default() -> Self {
+        Self {
+            created_paths: RefCell::new(HashSet::new()),
+        }
+    }
+}
+
+impl DryRunFileSystem {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
 
 impl FileSystem for DryRunFileSystem {
     fn create_dir_all(&self, path: &Path) -> std::io::Result<()> {
         println!("Would create directory: {}", path.display());
+        self.created_paths.borrow_mut().insert(path.into());
         Ok(())
     }
 
     fn exists(&self, path: &Path) -> bool {
-        if path.exists() {
-            println!("File exists: {}", path.display());
+        if path.exists() || self.created_paths.borrow().contains(path) {
             true
         } else {
             false
@@ -52,6 +71,7 @@ impl FileSystem for DryRunFileSystem {
 
     fn write_file(&self, path: &Path, _contents: &str) -> std::io::Result<()> {
         println!("Would create file: {}", path.display());
+        self.created_paths.borrow_mut().insert(path.into());
         Ok(())
     }
-} 
+}
