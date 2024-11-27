@@ -83,13 +83,25 @@ dependencies = [
 name = "aoc"
 version = "0.1.0"
 dependencies = [
+ "aoc-macros",
  "clap",
  "heck 0.4.1",
+ "inventory",
  "mockall",
  "reqwest",
  "scraper",
+ "solutions",
  "tempfile",
  "time",
+]
+
+[[package]]
+name = "aoc-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.89",
 ]
 
 [[package]]
@@ -743,6 +755,12 @@ dependencies = [
  "equivalent",
  "hashbrown",
 ]
+
+[[package]]
+name = "inventory"
+version = "0.3.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f958d3d68f4167080a18141e10381e7634563984a537f2a49a30fd8e53ac5767"
 
 [[package]]
 name = "ipnet"
@@ -1446,6 +1464,10 @@ dependencies = [
  "libc",
  "windows-sys 0.52.0",
 ]
+
+[[package]]
+name = "solutions"
+version = "0.1.0"
 
 [[package]]
 name = "stable_deref_trait"

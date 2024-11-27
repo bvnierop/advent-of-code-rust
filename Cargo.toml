@@ -1,6 +1,8 @@
 [workspace]
 members = [
     "src/aoc",
+    "src/aoc-macros",
+    "src/solutions"
 ]
 
 resolver = "2" 
