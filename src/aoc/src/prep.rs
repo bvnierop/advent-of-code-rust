@@ -195,7 +195,7 @@ impl FileNames {
         };
 
         Self {
-            solution: make_path("src/solutions", format!("{:02}-{}.rs", day, name.to_kebab_case())),
+            solution: make_path("src/solutions/src", format!("{:02}-{}.rs", day, name.to_kebab_case())),
             problem: make_path("problem", format!("{:02}-{}.org", day, name.to_kebab_case())),
             input: make_path("input", format!("{:02}.in", day)),
             sample_in: make_path("input", format!("{:02}-sample.in", day)),
@@ -268,7 +268,7 @@ mod tests {
     fn test_file_names_new() {
         let names = FileNames::new(2023, 5, "Some Problem Name");
 
-        assert_eq!(names.solution, PathBuf::from("src/solutions/2023/05-some-problem-name.rs"));
+        assert_eq!(names.solution, PathBuf::from("src/solutions/src/2023/05-some-problem-name.rs"));
         assert_eq!(names.problem, PathBuf::from("problem/2023/05-some-problem-name.org"));
         assert_eq!(names.input, PathBuf::from("input/2023/05.in"));
         assert_eq!(names.sample_in, PathBuf::from("input/2023/05-sample.in"));
