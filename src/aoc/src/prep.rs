@@ -150,9 +150,9 @@ fn create_all_files(year: u16, day: u8, name: &str, statement: &str, fs: &dyn Fi
     Ok(())
 }
 
-fn create_file(fs: &dyn FileSystem, (dir, path): (PathBuf, PathBuf), contents: &str) -> std::io::Result<()> {
+fn create_file(fs: &dyn FileSystem, path: PathBuf, contents: &str) -> std::io::Result<()> {
     if !fs.exists(&path) {
-        fs.create_dir_all(&dir)?;
+        fs.create_dir_all(path.parent().unwrap_or(&path))?;
         fs.write_file(&path, contents)?;
     }
     Ok(())
@@ -172,18 +172,18 @@ fn get_problem_info(year: u16, day: u8, client: &dyn AdventOfCodeClient)
 // --------------
 
 struct FileNames {
-    solution: (PathBuf, PathBuf),
-    problem: (PathBuf, PathBuf),
-    input: (PathBuf, PathBuf),
-    sample_in: (PathBuf, PathBuf),
-    sample_out: (PathBuf, PathBuf),
+    solution: PathBuf,
+    problem: PathBuf,
+    input: PathBuf,
+    sample_in: PathBuf,
+    sample_out: PathBuf,
 }
 
 impl FileNames {
     fn new(year: u16, day: u8, name: &str) -> Self {
         let make_path = |dir: &str, filename: String| {
             let base = PathBuf::from(dir).join(year.to_string());
-            (base.clone(), base.join(filename))
+            base.join(filename)
         };
 
         Self {
@@ -270,44 +270,10 @@ mod tests {
     fn test_file_names_new() {
         let names = FileNames::new(2023, 5, "Some Problem Name");
 
-        assert_eq!(
-            names.solution,
-            (
-                PathBuf::from("src/solutions/2023"),
-                PathBuf::from("src/solutions/2023/05-some-problem-name.rs")
-            )
-        );
-
-        assert_eq!(
-            names.problem,
-            (
-                PathBuf::from("problem/2023"),
-                PathBuf::from("problem/2023/05-some-problem-name.org")
-            )
-        );
-
-        assert_eq!(
-            names.input,
-            (
-                PathBuf::from("input/2023"),
-                PathBuf::from("input/2023/05.in")
-            )
-        );
-
-        assert_eq!(
-            names.sample_in,
-            (
-                PathBuf::from("input/2023"),
-                PathBuf::from("input/2023/05-sample.in")
-            )
-        );
-
-        assert_eq!(
-            names.sample_out,
-            (
-                PathBuf::from("input/2023"),
-                PathBuf::from("input/2023/05-sample.out")
-            )
-        );
+        assert_eq!(names.solution, PathBuf::from("src/solutions/2023/05-some-problem-name.rs"));
+        assert_eq!(names.problem, PathBuf::from("problem/2023/05-some-problem-name.org"));
+        assert_eq!(names.input, PathBuf::from("input/2023/05.in"));
+        assert_eq!(names.sample_in, PathBuf::from("input/2023/05-sample.in"));
+        assert_eq!(names.sample_out, PathBuf::from("input/2023/05-sample.out"));
     }
 } 
