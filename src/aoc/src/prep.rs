@@ -201,10 +201,7 @@ impl FileNames {
 
 fn convert_html_to_org(html: &str) -> Result<String, Box<dyn std::error::Error>> {
     let mut child = Command::new("pandoc")
-        .arg("-f")
-        .arg("html")
-        .arg("-t")
-        .arg("org")
+        .args(&["-f", "html", "-t", "org"])
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
         .spawn()?;
