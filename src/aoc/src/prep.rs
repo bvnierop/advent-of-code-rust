@@ -132,18 +132,19 @@ fn create_files(year: u16, day: u8, fs: &dyn FileSystem, client: &dyn AdventOfCo
 fn create_all_files(year: u16, day: u8, name: &str, statement: &str, fs: &dyn FileSystem, client: &dyn AdventOfCodeClient) 
     -> std::io::Result<()> 
 {
-    create_file(fs, get_solution_paths(year, day, name), SOLUTION_TEMPLATE)?;
-    
+    let names = FileNames::new(year, day, name);
+
+    create_file(fs, names.solution, SOLUTION_TEMPLATE)?;
+
     if let Ok(org) = convert_html_to_org(statement) {
-        create_file(fs, get_problem_paths(year, day, name), &org)?;
+        create_file(fs, names.problem, &org)?;
     }
     
-    let (dir, sample_in, sample_out) = get_sample_paths(year, day);
-    create_file(fs, (dir.clone(), sample_in), "")?;
-    create_file(fs, (dir, sample_out), "\n\n")?;
+    create_file(fs, names.sample_in, "")?;
+    create_file(fs, names.sample_out, "\n\n")?;
     
     if let Ok(input) = client.get_problem_input(year, day) {
-        create_file(fs, get_input_paths(year, day), &input)?;
+        create_file(fs, names.input, &input)?;
     }
     
     Ok(())
@@ -170,70 +171,29 @@ fn get_problem_info(year: u16, day: u8, client: &dyn AdventOfCodeClient)
 // Path Generation
 // --------------
 
-struct FileConfig {
-    base_dir: &'static str,
-    extension: &'static str,
-    name_format: NameFormat,
+struct FileNames {
+    solution: (PathBuf, PathBuf),
+    problem: (PathBuf, PathBuf),
+    input: (PathBuf, PathBuf),
+    sample_in: (PathBuf, PathBuf),
+    sample_out: (PathBuf, PathBuf),
 }
 
-enum NameFormat {
-    WithProblemName(String),  // {day}-{name}.{ext}
-    Sample,                   // {day}-sample.{ext}
-    Plain,                    // {day}.{ext}
-}
+impl FileNames {
+    fn new(year: u16, day: u8, name: &str) -> Self {
+        let make_path = |dir: &str, filename: String| {
+            let base = PathBuf::from(dir).join(year.to_string());
+            (base.clone(), base.join(filename))
+        };
 
-fn get_file_path(year: u16, day: u8, config: FileConfig) -> (PathBuf, PathBuf) {
-    let base_dir = PathBuf::from(config.base_dir).join(year.to_string());
-    
-    let filename = match config.name_format {
-        NameFormat::WithProblemName(name) => {
-            format!("{:02}-{}.{}", day, to_kebab_case(&name), config.extension)
-        },
-        NameFormat::Sample => format!("{:02}-sample.{}", day, config.extension),
-        NameFormat::Plain => format!("{:02}.{}", day, config.extension),
-    };
-    
-    (base_dir.clone(), base_dir.join(filename))
-}
-
-fn get_solution_paths(year: u16, day: u8, name: &str) -> (PathBuf, PathBuf) {
-    get_file_path(year, day, FileConfig {
-        base_dir: "src/solutions",
-        extension: "rs",
-        name_format: NameFormat::WithProblemName(name.to_string()),
-    })
-}
-
-fn get_problem_paths(year: u16, day: u8, name: &str) -> (PathBuf, PathBuf) {
-    get_file_path(year, day, FileConfig {
-        base_dir: "problem",
-        extension: "org",
-        name_format: NameFormat::WithProblemName(name.to_string()),
-    })
-}
-
-fn get_input_paths(year: u16, day: u8) -> (PathBuf, PathBuf) {
-    get_file_path(year, day, FileConfig {
-        base_dir: "input",
-        extension: "in",
-        name_format: NameFormat::Plain,
-    })
-}
-
-fn get_sample_paths(year: u16, day: u8) -> (PathBuf, PathBuf, PathBuf) {
-    let (dir, sample_in) = get_file_path(year, day, FileConfig {
-        base_dir: "input",
-        extension: "in",
-        name_format: NameFormat::Sample,
-    });
-    
-    let (_dir, sample_out) = get_file_path(year, day, FileConfig {
-        base_dir: "input",
-        extension: "out",
-        name_format: NameFormat::Sample,
-    });
-    
-    (dir, sample_in, sample_out)
+        Self {
+            solution: make_path("src/solutions", format!("{:02}-{}.rs", day, to_kebab_case(name))),
+            problem: make_path("problem", format!("{:02}-{}.org", day, to_kebab_case(name))),
+            input: make_path("input", format!("{:02}.in", day)),
+            sample_in: make_path("input", format!("{:02}-sample.in", day)),
+            sample_out: make_path("input", format!("{:02}-sample.out", day)),
+        }
+    }
 }
 
 // Utilities
@@ -310,27 +270,47 @@ mod tests {
     }
 
     #[test]
-    fn test_solution_paths() {
-        let (_dir, file) = get_solution_paths(2024, 1, "Test Problem Name!");
-        assert_eq!(file.file_name().unwrap(), "01-test-problem-name.rs");
-    }
+    fn test_file_names_new() {
+        let names = FileNames::new(2023, 5, "Some Problem Name");
 
-    #[test]
-    fn test_problem_paths() {
-        let (_dir, file) = get_problem_paths(2024, 1, "Test Problem Name!");
-        assert_eq!(file.file_name().unwrap(), "01-test-problem-name.org");
-    }
+        assert_eq!(
+            names.solution,
+            (
+                PathBuf::from("src/solutions/2023"),
+                PathBuf::from("src/solutions/2023/05-some-problem-name.rs")
+            )
+        );
 
-    #[test]
-    fn test_sample_paths() {
-        let (_dir, input, output) = get_sample_paths(2024, 1);
-        assert_eq!(input.file_name().unwrap(), "01-sample.in");
-        assert_eq!(output.file_name().unwrap(), "01-sample.out");
-    }
+        assert_eq!(
+            names.problem,
+            (
+                PathBuf::from("problem/2023"),
+                PathBuf::from("problem/2023/05-some-problem-name.org")
+            )
+        );
 
-    #[test]
-    fn test_input_paths() {
-        let (_dir, file) = get_input_paths(2024, 1);
-        assert_eq!(file.file_name().unwrap(), "01.in");
+        assert_eq!(
+            names.input,
+            (
+                PathBuf::from("input/2023"),
+                PathBuf::from("input/2023/05.in")
+            )
+        );
+
+        assert_eq!(
+            names.sample_in,
+            (
+                PathBuf::from("input/2023"),
+                PathBuf::from("input/2023/05-sample.in")
+            )
+        );
+
+        assert_eq!(
+            names.sample_out,
+            (
+                PathBuf::from("input/2023"),
+                PathBuf::from("input/2023/05-sample.out")
+            )
+        );
     }
 } 
