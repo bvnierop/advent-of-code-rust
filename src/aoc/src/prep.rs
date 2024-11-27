@@ -3,6 +3,7 @@ use time::{OffsetDateTime, Month};
 use crate::fs::{FileSystem, RealFileSystem, DryRunFileSystem};
 use crate::aoc_client::{AdventOfCodeClient, HttpAdventOfCodeClient};
 use std::process::Command;
+use heck::ToKebabCase;
 
 // Public Interface
 // ---------------
@@ -187,8 +188,8 @@ impl FileNames {
         };
 
         Self {
-            solution: make_path("src/solutions", format!("{:02}-{}.rs", day, to_kebab_case(name))),
-            problem: make_path("problem", format!("{:02}-{}.org", day, to_kebab_case(name))),
+            solution: make_path("src/solutions", format!("{:02}-{}.rs", day, name.to_kebab_case())),
+            problem: make_path("problem", format!("{:02}-{}.org", day, name.to_kebab_case())),
             input: make_path("input", format!("{:02}.in", day)),
             sample_in: make_path("input", format!("{:02}-sample.in", day)),
             sample_out: make_path("input", format!("{:02}-sample.out", day)),
@@ -218,16 +219,6 @@ fn convert_html_to_org(html: &str) -> Result<String, Box<dyn std::error::Error>>
     }
     
     Ok(String::from_utf8(output.stdout)?)
-}
-
-fn to_kebab_case(s: &str) -> String {
-    s.to_lowercase()
-        .chars()
-        .map(|c| if c.is_alphanumeric() { c } else { '-' })
-        .collect::<String>()
-        .replace("--", "-")
-        .trim_matches('-')
-        .to_string()
 }
 
 // Tests

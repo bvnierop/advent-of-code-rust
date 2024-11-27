@@ -16,3 +16,6 @@ problem/
 .aider.chat.history.md
 .aider.input.history
 .aider.tags.cache.v3/
+
+# Auto-generated lib-file
+src/solutions/src/lib.rs

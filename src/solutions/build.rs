@@ -1,32 +1,30 @@
-use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
+use heck::ToSnakeCase;
 
 fn main() {
-    // Get the directory where the build script is executed
-    let out_dir = env::var("OUT_DIR").unwrap();
-    let dest_path = PathBuf::from(&out_dir).join("all_modules.rs");
-
     // Define the directory where solution files are located
     let solutions_dir = Path::new("src");
 
     // Collect module declarations
     let mut modules = String::new();
-    visit_dirs(&solutions_dir, &mut modules).unwrap();
+    visit_dirs(&solutions_dir, &mut modules, 0).unwrap();
 
-    // Write the modules to the output file
+    // Write the modules to all_modules.rs in src/solutions/src
+    let dest_path = PathBuf::from("src").join("lib.rs");
     fs::write(&dest_path, modules).unwrap();
 
-    // Instruct Cargo to rerun the build script when files change
+    // Instruct Cargo to rerun the build script when files in src change
     println!("cargo:rerun-if-changed=src");
 }
 
-fn visit_dirs(dir: &Path, modules: &mut String) -> std::io::Result<()> {
+fn visit_dirs(dir: &Path, modules: &mut String, depth: usize) -> std::io::Result<()> {
     if dir.is_dir() {
-        // Check if the directory is a year folder (e.g., y2023)
-        if let Some(folder_name) = dir.file_name().and_then(|n| n.to_str()) {
-            if folder_name.starts_with('y') {
-                modules.push_str(&format!("pub mod {} {{\n", folder_name));
+        if depth != 0 {
+            if let Some(folder_name) = dir.file_name().and_then(|n| n.to_str()) {
+                let indent = "    ".repeat(depth - 1);
+                modules.push_str(&format!("{}#[path = \"{}\"]\n", indent, folder_name));
+                modules.push_str(&format!("{}pub mod y{} {{\n", indent, folder_name));
             }
         }
 
@@ -35,25 +33,31 @@ fn visit_dirs(dir: &Path, modules: &mut String) -> std::io::Result<()> {
             let path = entry.path();
 
             if path.is_dir() {
-                // Recurse into subdirectories
-                visit_dirs(&path, modules)?;
+                visit_dirs(&path, modules, depth + 1)?;
             } else if let Some(ext) = path.extension() {
                 if ext == "rs" {
                     if let Some(file_stem) = path.file_stem().and_then(|n| n.to_str()) {
-                        // Skip mod.rs and lib.rs files
                         if file_stem != "mod" && file_stem != "lib" {
-                            modules.push_str(&format!("    pub mod {};\n", file_stem));
+                            let indent = "    ".repeat(depth);
+
+                            let file_name = path.file_name().unwrap();
+
+                            modules.push_str(&format!(
+                                "{}#[path = \"{}\"]\n",
+                                indent,
+                                file_name.to_str().unwrap()
+                            ));
+
+                            modules.push_str(&format!("{}pub mod d{};\n", indent, file_stem.to_snake_case()));
                         }
                     }
                 }
             }
         }
 
-        // Close the module block if it was a year folder
-        if let Some(folder_name) = dir.file_name().and_then(|n| n.to_str()) {
-            if folder_name.starts_with('y') {
-                modules.push_str("}\n");
-            }
+        if depth != 0 {
+            let indent = "    ".repeat(depth - 1);
+            modules.push_str(&format!("{}}}\n", indent));
         }
     }
     Ok(())
