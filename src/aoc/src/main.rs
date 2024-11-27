@@ -22,7 +22,7 @@ enum Commands {
     Prep {
         first: Option<String>,
         second: Option<String>,
-        #[arg(long)]
+        #[arg(short = 'n', long)]
         dry_run: bool,
     },
     /// Run a solution
@@ -100,9 +100,18 @@ mod tests {
         
         assert_eq!(args.len(), 3, "prep should accept two optional arguments and a dry-run flag");
         
+        // Check that dry_run flag exists with correct options
+        let dry_run_arg = args.iter()
+            .find(|a| a.get_id().as_str() == "dry_run")
+            .expect("dry_run flag should exist");
+    
         assert!(
-            args.iter().any(|a| a.get_id().as_str() == "dry_run"),
-            "prep should have a dry-run flag"
+            dry_run_arg.get_short() == Some('n'),
+            "dry_run should have short flag '-n'"
+        );
+        assert!(
+            dry_run_arg.get_long() == Some("dry-run"),
+            "dry_run should have long flag '--dry-run'"
         );
     }
 }

@@ -90,10 +90,15 @@ fn get_current_advent() -> (u16, u8) {
 // File Creation
 // ------------
 
-const SOLUTION_TEMPLATE: &str = r###"pub fn solve_level1(input: &[&str]) -> String {
+const SOLUTION_TEMPLATE: &str = r###"use aoc_macros::advent_of_code;
+use inventory;
+
+#[advent_of_code({year}, {day}, 1)]
+pub fn solve_level1(input: &[&str]) -> String {
     todo!("Implement solution for level 1")
 }
 
+#[advent_of_code({year}, {day}, 2)]
 pub fn solve_level2(input: &[&str]) -> String {
     todo!("Implement solution for level 2")
 }
@@ -135,7 +140,9 @@ fn create_all_files(year: u16, day: u8, name: &str, statement: &str, fs: &dyn Fi
 {
     let names = FileNames::new(year, day, name);
 
-    create_file(fs, names.solution, SOLUTION_TEMPLATE)?;
+    let solution_contents = SOLUTION_TEMPLATE.replace("{year}", &year.to_string())
+                                          .replace("{day}", &day.to_string());
+    create_file(fs, names.solution, &solution_contents)?;
 
     if let Ok(org) = convert_html_to_org(statement) {
         create_file(fs, names.problem, &org)?;
