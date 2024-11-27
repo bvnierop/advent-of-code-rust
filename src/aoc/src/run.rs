@@ -85,11 +85,14 @@ fn filter_solvers(
     level: Option<u8>,
     solver_name: Option<&str>,
 ) -> Vec<Solver> {
-    solvers
+    let mut filtered: Vec<Solver> = solvers
         .into_iter()
         .filter(|s| level.map_or(true, |l| s.level == l))
         .filter(|s| solver_name.map_or(true, |name| s.name == name))
-        .collect()
+        .collect();
+    
+    filtered.sort_by_key(|s| s.level);
+    filtered
 }
 
 fn run_solver(
