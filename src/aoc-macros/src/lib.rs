@@ -28,7 +28,7 @@ pub fn advent_of_code(args: TokenStream, input: TokenStream) -> TokenStream {
         #fn_vis fn #fn_name(input: &[&str]) -> String #fn_block
 
         inventory::submit! {
-            crate::solver::SolverInfo {
+            aoc_core::SolverInfo {
                 year: #year,
                 day: #day,
                 level: #level,

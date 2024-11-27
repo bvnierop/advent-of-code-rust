@@ -4,12 +4,8 @@ mod prep;
 mod fs;
 mod aoc_client;
 mod run;
-mod solver;
-mod types;
 
-// Import solutions crate to ensure solvers are registered
 extern crate solutions;
-solutions::inventory::collect!();
 
 use prep::parse_year_or_day;
 
@@ -66,7 +62,7 @@ fn main() {
             }
         }
         Commands::Solvers => {
-            if let Err(e) = solver::list_solvers() {
+            if let Err(e) = aoc_core::list_solvers() {
                 eprintln!("Error: {}", e);
                 std::process::exit(1);
             }

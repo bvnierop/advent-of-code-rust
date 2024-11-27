@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 use std::fs;
-use crate::types::Solver;
+use aoc_core::Solver;
 
 #[derive(Debug)]
 pub struct RunConfig {
@@ -72,7 +72,7 @@ fn read_input(path: &Path) -> Result<Vec<String>, std::io::Error> {
 }
 
 fn discover_solvers(year: u16, day: u8) -> Result<Vec<Solver>, String> {
-    let solvers = crate::solver::discover_solvers(year, day);
+    let solvers = aoc_core::discover_solvers(year, day);
     if solvers.is_empty() {
         Err(format!("No solvers found for year {} day {}", year, day))
     } else {

@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "src/aoc",
+    "src/aoc", "src/aoc-core",
     "src/aoc-macros",
     "src/solutions"
 ]

@@ -1,4 +1,11 @@
-use crate::types::Solver;
+#[derive(Debug)]
+pub struct Solver {
+    pub year: u16,
+    pub day: u8,
+    pub level: u8,
+    pub name: String,
+    pub func: fn(&[&str]) -> String,
+}
 
 pub struct SolverInfo {
     pub year: u16,
@@ -72,4 +79,4 @@ mod tests {
         assert_eq!(sorted[1].level, 1);
         assert_eq!(sorted[2].level, 2);
     }
-} 
+}

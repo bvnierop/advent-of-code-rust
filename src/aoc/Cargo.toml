@@ -11,6 +11,7 @@ scraper = "0.18"
 heck = "0.4"
 inventory = "0.3"
 aoc-macros = { path = "../aoc-macros" }
+aoc-core = { path = "../aoc-core" }
 solutions = { path = "../solutions" }
 
 [dev-dependencies]

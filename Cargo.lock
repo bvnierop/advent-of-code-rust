@@ -83,6 +83,7 @@ dependencies = [
 name = "aoc"
 version = "0.1.0"
 dependencies = [
+ "aoc-core",
  "aoc-macros",
  "clap",
  "heck 0.4.1",
@@ -96,9 +97,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "aoc-core"
+version = "0.1.0"
+dependencies = [
+ "inventory",
+]
+
+[[package]]
 name = "aoc-macros"
 version = "0.1.0"
 dependencies = [
+ "aoc-core",
  "proc-macro2",
  "quote",
  "syn 2.0.89",
@@ -1468,6 +1477,11 @@ dependencies = [
 [[package]]
 name = "solutions"
 version = "0.1.0"
+dependencies = [
+ "aoc-core",
+ "aoc-macros",
+ "inventory",
+]
 
 [[package]]
 name = "stable_deref_trait"

@@ -8,3 +8,6 @@ name = "solutions"
 path = "src/lib.rs"
 
 [dependencies]
+inventory = "0.3"
+aoc-macros = { path = "../aoc-macros" }
+aoc-core = { path = "../aoc-core" }
