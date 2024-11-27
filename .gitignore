@@ -10,4 +10,9 @@ input/
 problem/
 
 # Session cookie
-.session 
+.session
+
+# Aider files
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.v3/
