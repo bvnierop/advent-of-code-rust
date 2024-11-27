@@ -11,10 +11,10 @@ pub fn solve_level2(input: &[&str]) -> String {
     todo!("Implement solution for level 2")
 }
 
-// #[advent_of_code(2023, 1, 2)]
-// pub fn solve_level2(input: &[&str]) -> String {
-//     todo!("Implement solution for level 2")
-// }
+#[advent_of_code(2023, 1, 2)]
+pub fn solve_level2(input: &[&str]) -> String {
+    todo!("Implement solution for level 2")
+}
 
 #[cfg(test)]
 mod tests {
