@@ -12,6 +12,7 @@ path = "src/lib.rs"
 inventory = "0.3"
 aoc-macros = { path = "../aoc-macros" }
 aoc-core = { path = "../aoc-core" }
+scan_fmt = "0.2.6"
 
 [build-dependencies]
 heck = "0.4"
