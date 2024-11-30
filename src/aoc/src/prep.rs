@@ -92,6 +92,7 @@ fn get_current_advent() -> (u16, u8) {
 
 const SOLUTION_TEMPLATE: &str = r###"use aoc_macros::advent_of_code;
 use inventory;
+use scan_fmt::scan_fmt;
 
 #[advent_of_code({year}, {day}, 1)]
 pub fn solve_level1(input: &[&str]) -> String {
@@ -106,20 +107,24 @@ pub fn solve_level2(input: &[&str]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use std::sync::LazyLock;
 
-    const EXAMPLE: &str = r#"
-"#;
+    static SAMPLE: LazyLock<String> = LazyLock::new(|| fs::read_to_string("../../input/{year}/{day}-sample.in").unwrap());
+    static SAMPLE_OUT: LazyLock<String> = LazyLock::new(|| fs::read_to_string("../../input/{year}/{day}-sample.out").unwrap());
 
     #[test]
     fn test_level1() {
-        let input: Vec<_> = EXAMPLE.lines().collect();
-        assert_eq!(solve_level1(&input), "expected");
+        let input: Vec<_> = (*SAMPLE).lines().collect();
+        let expected = (*SAMPLE_OUT).lines().next().unwrap();
+        assert_eq!(solve_level1(&input), expected);
     }
 
     #[test]
     fn test_level2() {
-        let input: Vec<_> = EXAMPLE.lines().collect();
-        assert_eq!(solve_level2(&input), "expected");
+        let input: Vec<_> = (*SAMPLE).lines().collect();
+        let expected = (*SAMPLE_OUT).lines().skip(3).next().unwrap();
+        assert_eq!(solve_level2(&input), expected);
     }
 }"###;
 
