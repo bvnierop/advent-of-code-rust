@@ -6,7 +6,8 @@ debug/
 release/
 
 # Problem inputs and statements
-input/
+input/*/??.in
+input/*/??.out
 problem/
 
 # Session cookie
