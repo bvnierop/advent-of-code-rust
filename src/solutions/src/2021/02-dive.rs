@@ -54,5 +54,4 @@ mod tests {
         let expected = (*SAMPLE_OUT).lines().skip(3).next().unwrap();
         assert_eq!(solve_level2(&input), expected);
     }
-
 }
