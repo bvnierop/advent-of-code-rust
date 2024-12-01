@@ -119,14 +119,14 @@ mod tests {
     fn test_level1() {
         let input: Vec<_> = (*SAMPLE).lines().collect();
         let expected = (*SAMPLE_OUT).lines().next().unwrap();
-        assert_eq!(solve_level1(&input), expected);
+        assert_eq!(format!("{}", solve_level1(&input)), expected);
     }
 
     #[test]
     fn test_level2() {
         let input: Vec<_> = (*SAMPLE).lines().collect();
         let expected = (*SAMPLE_OUT).lines().skip(3).next().unwrap();
-        assert_eq!(solve_level2(&input), expected);
+        assert_eq!(format!("{}", solve_level2(&input)), expected);
     }
 }"###;
 
