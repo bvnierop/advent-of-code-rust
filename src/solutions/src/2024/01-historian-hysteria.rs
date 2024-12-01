@@ -5,35 +5,33 @@ use inventory;
 use scan_fmt::scan_fmt;
 
 #[advent_of_code(2024, 1, 1)]
-pub fn solve_level1(input: &[&str]) -> String {
-    let parsed: Vec<(i32, i32)> = input.iter()
-         .map(|s| scan_fmt!(*s, "{} {}", i32, i32).unwrap())
-        .collect();
+pub fn solve_level1(input: &[&str]) -> i32 {
+    let file: Vec<(i32, i32)> =
+        input.into_iter()
+             .map(|s| scan_fmt!(s, "{} {}", i32, i32).unwrap())
+             .collect();
 
-    let mut first_list: Vec<i32> = parsed.iter().map(|(f, _)| *f).collect();
-    let mut second_list: Vec<i32> = parsed.iter().map(|(_, s)| *s).collect();
+    let (mut first, mut second): (Vec<i32>, Vec<i32>) = file.into_iter().unzip();
 
-    first_list.sort();
-    second_list.sort();
+    first.sort();
+    second.sort();
 
-    first_list.iter().zip(second_list)
-                     .map(|(f, s)| i32::abs(*f - s))
-                     .sum::<i32>().to_string()
+    first.into_iter().zip(second)
+        .map(|(f, s)| (f - s).abs())
+        .sum()
 }
 
 #[advent_of_code(2024, 1, 2)]
-pub fn solve_level2(input: &[&str]) -> String {
-    let parsed: Vec<(i32, i32)> = input.iter()
+pub fn solve_level2(input: &[&str]) -> i32 {
+    let file: Vec<(i32, i32)> = input.iter()
          .map(|s| scan_fmt!(*s, "{} {}", i32, i32).unwrap())
         .collect();
 
-    let first_list: Vec<i32> = parsed.iter().map(|(f, _)| *f).collect();
-    let second_list: Vec<i32> = parsed.iter().map(|(_, s)| *s).collect();
+    let (first, second): (Vec<i32>, Vec<i32>) = file.into_iter().unzip();
 
-    first_list.iter()
-        .map(|f| second_list.iter().filter(|s| *s == f).count() as i32 * (*f))
-        .sum::<i32>()
-        .to_string()
+    first.iter()
+        .map(|f| second.iter().filter(|s| *s == f).count() as i32 * (*f))
+        .sum()
 }
 
 #[cfg(test)]
@@ -49,13 +47,13 @@ mod tests {
     fn test_level1() {
         let input: Vec<_> = (*SAMPLE).lines().collect();
         let expected = (*SAMPLE_OUT).lines().next().unwrap();
-        assert_eq!(solve_level1(&input), expected);
+        assert_eq!(format!("{}", solve_level1(&input)), expected);
     }
 
     #[test]
     fn test_level2() {
         let input: Vec<_> = (*SAMPLE).lines().collect();
         let expected = (*SAMPLE_OUT).lines().skip(3).next().unwrap();
-        assert_eq!(solve_level2(&input), expected);
+        assert_eq!(format!("{}", solve_level2(&input)), expected);
     }
 }
