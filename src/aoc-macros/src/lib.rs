@@ -1,5 +1,5 @@
 use proc_macro::TokenStream;
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::{parse_macro_input, ItemFn, Lit};
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
@@ -22,10 +22,19 @@ pub fn advent_of_code(args: TokenStream, input: TokenStream) -> TokenStream {
     let fn_name = &input_fn.sig.ident;
     let fn_vis = &input_fn.vis;
     let fn_block = &input_fn.block;
+    let fn_return_type = &input_fn.sig.output;
+
+    let fn_runner_name = format_ident!("{}__runner__", &input_fn.sig.ident);
     
     let expanded = quote! {
         #[doc(hidden)]
-        #fn_vis fn #fn_name(input: &[&str]) -> String #fn_block
+        #[allow(non_snake_case)]
+        pub fn #fn_runner_name(input: &[&str]) -> String {
+            format!("{}", #fn_name(input))
+        }
+
+        #[doc(hidden)]
+        #fn_vis fn #fn_name(input: &[&str]) #fn_return_type #fn_block
 
         inventory::submit! {
             aoc_core::SolverInfo {
@@ -33,7 +42,7 @@ pub fn advent_of_code(args: TokenStream, input: TokenStream) -> TokenStream {
                 day: #day,
                 level: #level,
                 name: stringify!(#fn_name),
-                func: #fn_name,
+                func: #fn_runner_name,
             }
         }
     };
@@ -62,4 +71,4 @@ fn parse_args(args: &Punctuated<Lit, Comma>) -> (u16, u8, u8) {
     };
 
     (year, day, level)
-} 
+}
