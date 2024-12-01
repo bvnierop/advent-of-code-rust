@@ -149,7 +149,7 @@ fn create_all_files(year: u16, day: u8, name: &str, statement: &str, fs: &dyn Fi
 
     let solution_contents = SOLUTION_TEMPLATE.replace("{year}", &year.to_string())
                                           .replace("{day}", &day.to_string())
-                                          .replace("{day-long}", &format!("{:02}", day.to_string()));
+                                          .replace("{day-long}", &format!("{:02}", day));
     create_file(fs, names.solution, &solution_contents)?;
 
     if let Ok(org) = convert_html_to_org(statement) {
