@@ -24,8 +24,10 @@
             pkgs.pkg-config
             pkgs.openssl
             pkgs.pandoc
+            pkgs.gdb
+            pkgs.lldb
           ];
         };
       }
     );
-} 
+}
