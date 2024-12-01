@@ -90,7 +90,9 @@ fn get_current_advent() -> (u16, u8) {
 // File Creation
 // ------------
 
-const SOLUTION_TEMPLATE: &str = r###"use aoc_macros::advent_of_code;
+const SOLUTION_TEMPLATE: &str = r###"#![allow(unused_imports)]
+
+use aoc_macros::advent_of_code;
 use inventory;
 use scan_fmt::scan_fmt;
 
@@ -110,8 +112,8 @@ mod tests {
     use std::fs;
     use std::sync::LazyLock;
 
-    static SAMPLE: LazyLock<String> = LazyLock::new(|| fs::read_to_string("../../input/{year}/{day}-sample.in").unwrap());
-    static SAMPLE_OUT: LazyLock<String> = LazyLock::new(|| fs::read_to_string("../../input/{year}/{day}-sample.out").unwrap());
+    static SAMPLE: LazyLock<String> = LazyLock::new(|| fs::read_to_string("../../input/{year}/{day-long}-sample.in").unwrap());
+    static SAMPLE_OUT: LazyLock<String> = LazyLock::new(|| fs::read_to_string("../../input/{year}/{day-long}-sample.out").unwrap());
 
     #[test]
     fn test_level1() {
@@ -146,7 +148,8 @@ fn create_all_files(year: u16, day: u8, name: &str, statement: &str, fs: &dyn Fi
     let names = FileNames::new(year, day, name);
 
     let solution_contents = SOLUTION_TEMPLATE.replace("{year}", &year.to_string())
-                                          .replace("{day}", &day.to_string());
+                                          .replace("{day}", &day.to_string())
+                                          .replace("{day-long}", &format!("{:02}", day.to_string()));
     create_file(fs, names.solution, &solution_contents)?;
 
     if let Ok(org) = convert_html_to_org(statement) {
