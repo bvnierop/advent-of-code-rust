@@ -8,6 +8,7 @@ mod run;
 extern crate solutions;
 
 use prep::parse_year_or_day;
+use run::YearOrDayOrInput;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -27,9 +28,9 @@ enum Commands {
     },
     /// Run a solution
     Run {
-        year: Option<u16>,
-        day: Option<u8>,
-        input_file: Option<String>,
+        first: Option<String>,
+        second: Option<String>,
+        third: Option<String>,
         #[arg(long)]
         level: Option<u8>,
         #[arg(long)]
@@ -48,14 +49,17 @@ fn main() {
             let second = second.as_deref().map(parse_year_or_day).transpose().unwrap();
             prep::handle(first, second, dry_run);
         }
-        Commands::Run { year, day, input_file, level, solver } => {
-            let config = run::RunConfig {
-                year,
-                day,
-                input_file,
+        Commands::Run { first, second, third, level, solver } => {
+            let first = first.as_deref().map(YearOrDayOrInput::new).transpose().unwrap();
+            let second = second.as_deref().map(YearOrDayOrInput::new).transpose().unwrap();
+            let third = third.as_deref().map(YearOrDayOrInput::new).transpose().unwrap();
+            let config = run::RunConfig::new(
+                first,
+                second,
+                third,
                 level,
                 solver,
-            };
+            );
             if let Err(e) = run::handle(config) {
                 eprintln!("Error: {}", e);
                 std::process::exit(1);

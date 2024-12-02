@@ -3,6 +3,53 @@ use std::time::Instant;
 use std::fs;
 use aoc_core::Solver;
 
+pub enum YearOrDayOrInput {
+    Year(u16),
+    Day(u8),
+    Input(String)
+}
+
+impl YearOrDayOrInput {
+    pub fn new(arg: &str) -> Result<Self, String> {
+        let num = arg.parse::<u16>();
+
+        match num {
+            Ok(n) => {
+                if n >= 2015 {
+                    Ok(YearOrDayOrInput::Year(n))
+                } else if (1..=25).contains(&(n as u8)) {
+                    Ok(YearOrDayOrInput::Day(n as u8))
+                } else {
+                    Err("Invalid year or day".to_string())
+                }
+            },
+            Err(_) => Ok(YearOrDayOrInput::Input(arg.to_string()))
+        }
+    }
+}
+
+
+fn extract_year(input: &Option<YearOrDayOrInput>) -> Option<u16> {
+    match input {
+        Some(YearOrDayOrInput::Year(n)) => Some(*n),
+        _ => None
+    }
+}
+
+ fn extract_day(input: &Option<YearOrDayOrInput>) -> Option<u8> {
+    match input {
+        Some(YearOrDayOrInput::Day(n)) => Some(*n),
+        _ => None
+    }
+}
+
+ fn extract_input(input: &Option<YearOrDayOrInput>) -> Option<String> {
+    match input {
+        Some(YearOrDayOrInput::Input(s)) => Some(s.clone()),
+        _ => None
+    }
+}
+
 #[derive(Debug)]
 pub struct RunConfig {
     pub year: Option<u16>,
@@ -10,6 +57,36 @@ pub struct RunConfig {
     pub input_file: Option<String>,
     pub level: Option<u8>,
     pub solver: Option<String>,
+}
+
+impl RunConfig {
+    pub fn new(first: Option<YearOrDayOrInput>,
+               second: Option<YearOrDayOrInput>,
+               third: Option<YearOrDayOrInput>,
+               level: Option<u8>,
+               solver: Option<String>) -> RunConfig {
+        let year = extract_year(&first)
+            .unwrap_or_else(|| extract_year(&second)
+                            .unwrap_or_else(|| extract_year(&third)
+                                            .unwrap_or(0)));
+        let day = extract_day(&first)
+            .unwrap_or_else(|| extract_day(&second)
+                            .unwrap_or_else(|| extract_day(&third)
+                                            .unwrap_or(0)));
+
+        let input = extract_input(&first)
+            .unwrap_or_else(|| extract_input(&second)
+                            .unwrap_or_else(|| extract_input(&third)
+                                            .unwrap_or(String::new())));
+
+        RunConfig {
+            year: if year == 0 { None } else { Some(year) },
+            day: if day == 0 { None } else { Some(day) },
+            input_file: if input.is_empty() { None } else { Some(input) },
+            level,
+            solver
+        }
+    }
 }
 
 /// Handle the run command: execute solution(s) for a given problem
