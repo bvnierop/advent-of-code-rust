@@ -95,6 +95,7 @@ const SOLUTION_TEMPLATE: &str = r###"#![allow(unused_imports)]
 use aoc_macros::advent_of_code;
 use inventory;
 use scan_fmt::scan_fmt;
+use itertools::Itertools;
 
 #[advent_of_code({year}, {day}, 1)]
 pub fn solve_level1(input: &[&str]) -> String {
