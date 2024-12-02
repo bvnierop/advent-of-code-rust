@@ -29,16 +29,15 @@ pub fn verify_report(report: &Vec<u32>) -> bool {
 }
 
 pub fn verify_report_with_safety_dampener(report: &Vec<u32>) -> bool {
-    if report.len() == 0 { return false; }
-    assert!(report.len() > 2);
-    for skip in 0..report.len() {
-        let mut rep: Vec<u32> = Vec::new();
-        for i in 0..report.len() {
-            if i != skip { rep.push(report[i]); }
-        }
-        if verify_report(&rep) { return true; }
-    }
-    verify_report(&report)
+    verify_report(&report) ||
+    (0..report.len()).any(|skip| {
+        let rep: Vec<_> =
+            report.iter()
+                .enumerate()
+                .filter_map(|(idx, &level)| if idx != skip { Some(level) } else { None })
+                .collect();
+        verify_report(&rep)
+    })
 }
 
 #[advent_of_code(2024, 2, 1)]
