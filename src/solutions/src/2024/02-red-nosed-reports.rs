@@ -38,7 +38,7 @@ pub fn verify_report_with_safety_dampener(report: &Vec<u32>) -> bool {
         }
         if verify_report(&rep) { return true; }
     }
-    false
+    verify_report(&report)
 }
 
 #[advent_of_code(2024, 2, 1)]
