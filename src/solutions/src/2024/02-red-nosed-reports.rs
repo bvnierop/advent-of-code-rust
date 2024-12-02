@@ -4,31 +4,18 @@ use aoc_macros::advent_of_code;
 use inventory;
 use scan_fmt::scan_fmt;
 
-pub fn parse_report(line: &str) -> Vec<u32> {
+pub fn parse_report(line: &str) -> Vec<i32> {
     line.split_whitespace()
-        .map(|n| n.parse::<u32>().unwrap())
+        .map(|n| n.parse::<i32>().unwrap())
         .collect()
 }
 
-pub fn verify_report(report: &Vec<u32>) -> bool {
-    let increasing = report[0] < report[1];
-    let (result, _) = report.iter().fold((true, 1000), |(valid, prev), &cur| {
-        if prev == 1000 { (true, cur) }
-        else if valid == false { (false, cur) }
-        else {
-            if increasing && cur > prev && cur - prev <= 3 {
-                (true, cur)
-            } else if !increasing && prev > cur && prev - cur <= 3 {
-                (true, cur)
-            } else {
-                (false, cur)
-            }
-        }
-    });
-    result
+pub fn verify_report(report: &Vec<i32>) -> bool {
+    report.windows(2).all(|pair| {pair[0] - pair[1] <= 3 && pair[0] - pair[1] > 0}) ||
+    report.windows(2).all(|pair| {pair[1] - pair[0] <= 3 && pair[1] - pair[0] > 0})
 }
 
-pub fn verify_report_with_safety_dampener(report: &Vec<u32>) -> bool {
+pub fn verify_report_with_safety_dampener(report: &Vec<i32>) -> bool {
     verify_report(&report) ||
     (0..report.len()).any(|skip| {
         let rep: Vec<_> =
@@ -42,7 +29,7 @@ pub fn verify_report_with_safety_dampener(report: &Vec<u32>) -> bool {
 
 #[advent_of_code(2024, 2, 1)]
 pub fn solve_level1(input: &[&str]) -> usize {
-    let reports: Vec<Vec<u32>> = input.iter().map(|&line| parse_report(line)).collect();
+    let reports: Vec<Vec<i32>> = input.iter().map(|&line| parse_report(line)).collect();
     let valid = reports.iter().filter(|r| verify_report(r));
 
     valid.count()
@@ -50,7 +37,7 @@ pub fn solve_level1(input: &[&str]) -> usize {
 
 #[advent_of_code(2024, 2, 2)]
 pub fn solve_level2(input: &[&str]) -> usize {
-    let reports: Vec<Vec<u32>> = input.iter().map(|&line| parse_report(line)).collect();
+    let reports: Vec<Vec<i32>> = input.iter().map(|&line| parse_report(line)).collect();
     let valid = reports.iter().filter(|r| verify_report_with_safety_dampener(r));
 
     valid.count()
