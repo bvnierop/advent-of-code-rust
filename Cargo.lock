@@ -1588,6 +1588,7 @@ dependencies = [
  "im",
  "inventory",
  "itertools",
+ "regex",
  "scan_fmt",
 ]
 
