@@ -1,10 +1,14 @@
 #+title: Advent of Code - Rust
 
-* Advent of Code - Rust
 This repository contains my solutions to [[https://adventofcode.com/][Advent of Code]] in Rust. Every year or
 two I switch language for Advent of Code, learning one I've not used before..
 This time, 2024, it's Rust.
 
+* Project details
+Every time I participate in Advent of Code in a new language, I also build a new
+runner. This time I'm using AI assistance to (help) write the runner in an
+attempt to figure out what that means. For that reason, the text below is
+extremely detailed.
 ** Advent of Code
 Advent of Code is a yearly programming advent calendar. Every day from december
 1st to december 25th there are two problems. The second one unlocks after the
