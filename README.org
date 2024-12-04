@@ -137,6 +137,7 @@ pub fn solve_level2(input: &[&str]) {
 mod tests {
     use super::*;
 }
+#+end_src
 
 **** Extracting the problem name
 The URL for an Advent of Code problem has the following structure:
