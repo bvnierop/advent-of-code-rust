@@ -18,6 +18,7 @@ fn form_diagonal<I, J>(lookup: &Vec<Vec<char>>, xs: I, ys: J) -> String
     xs.zip(ys).map(|(x, y)| lookup[y][x]).collect()
 }
 
+
 #[advent_of_code(2024, 4, 1)]
 pub fn solve_level1(input: &[&str]) -> usize {
     let lookup: Vec<Vec<_>> = input.iter().map(|&s| s.chars().collect()).collect();
@@ -32,29 +33,23 @@ pub fn solve_level1(input: &[&str]) -> usize {
         total += count_xmas(&line.to_string());
     }
 
-    // vertical
     for x in 0..cols {
+        // vertical
         let str = lookup.iter().map(|line| line[x]).collect::<String>();
         total += count_xmas(&str);
-    }
 
-    // top-left -> bottom-right, starting at the top row
-    for x in 0..cols {
+        // top-left -> bottom-right, starting at the top row
         total += count_xmas(&form_diagonal(&lookup, x..cols, 0..rows));
-    }
 
-    // top-left -> bottom-right, starting at the left column. Skip (0,0).
-    for y in 1..rows {
-        total += count_xmas(&form_diagonal(&lookup, 0..cols, y..rows));
-    }
-
-    // top-right -> bottom-left, starting at the top row
-    for x in 0..cols {
+        // top-right -> bottom-left, starting at the top row
         total += count_xmas(&form_diagonal(&lookup, (0..x+1).rev(), 0..rows));
     }
 
-    // top-right -> bottom-left, starting at the right column. Skip (cols, 0);
     for y in 1..rows {
+        // top-left -> bottom-right, starting at the left column. Skip (0,0).
+        total += count_xmas(&form_diagonal(&lookup, 0..cols, y..rows));
+
+        // top-right -> bottom-left, starting at the right column. Skip (cols, 0);
         total += count_xmas(&form_diagonal(&lookup, (0..cols).rev(), y..rows));
     }
 
