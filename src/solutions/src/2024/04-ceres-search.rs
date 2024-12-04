@@ -6,91 +6,58 @@ use scan_fmt::scan_fmt;
 use itertools::Itertools;
 use regex::Regex;
 
+fn count_xmas(str: &String) -> usize {
+    let re = Regex::new(r"(XMAS)").unwrap();
+    let reversed = str.chars().rev().collect::<String>();
+    re.captures_iter(&str).count() +
+        re.captures_iter(&reversed).count()
+}
+
+fn form_diagonal<I, J>(lookup: &Vec<Vec<char>>, xs: I, ys: J) -> String
+    where I: Iterator<Item = usize>, J: Iterator<Item = usize> {
+    xs.zip(ys).map(|(x, y)| lookup[y][x]).collect()
+}
+
 #[advent_of_code(2024, 4, 1)]
 pub fn solve_level1(input: &[&str]) -> usize {
     let lookup: Vec<Vec<_>> = input.iter().map(|&s| s.chars().collect()).collect();
 
+    let cols = lookup[0].len();
+    let rows = lookup.len();
+
     let mut total = 0;
 
     // horizontal
-    for row in 0..lookup.len() {
-        for col in 0..(lookup[row].len() - 3) {
-            if lookup[row][col] == 'X' {
-                if lookup[row][col + 1] == 'M' && lookup[row][col + 2] == 'A' && lookup[row][col + 3] == 'S' {
-                    total += 1;
-                }
-            }
-        }
-    }
-    for row in 0..lookup.len() {
-        for col in 3..lookup[row].len()  {
-            if lookup[row][col] == 'X' {
-                if lookup[row][col - 1] == 'M' && lookup[row][col - 2] == 'A' && lookup[row][col - 3] == 'S' {
-                    total += 1;
-                }
-            }
-        }
+    for line in input {
+        total += count_xmas(&line.to_string());
     }
 
-    // verticcal
-    for row in 0..(lookup.len() - 3) {
-        for col in 0..lookup[row].len()  {
-            if lookup[row][col] == 'X' {
-                if lookup[row + 1][col] == 'M' && lookup[row + 2][col] == 'A' && lookup[row + 3][col] == 'S' {
-                    total += 1;
-                }
-            }
-        }
-    }
-    for row in 3..lookup.len() {
-        for col in 0..lookup[row].len()  {
-            if lookup[row][col] == 'X' {
-                if lookup[row - 1][col] == 'M' && lookup[row - 2][col] == 'A' && lookup[row - 3][col] == 'S' {
-                    total += 1;
-                }
-            }
-        }
+    // vertical
+    for x in 0..cols {
+        let str = lookup.iter().map(|line| line[x]).collect::<String>();
+        total += count_xmas(&str);
     }
 
-    // diagonal tl-br
-    for row in 0..lookup.len() - 3 {
-        for col in 0..lookup[row].len() - 3  {
-            if lookup[row][col] == 'X' {
-                if lookup[row + 1][col + 1] == 'M' && lookup[row + 2][col + 2] == 'A' && lookup[row + 3][col + 3] == 'S' {
-                    total += 1;
-                }
-            }
-        }
-    }
-    for row in 3..lookup.len() {
-        for col in 3..lookup[row].len()  {
-            if lookup[row][col] == 'X' {
-                if lookup[row - 1][col - 1] == 'M' && lookup[row - 2][col - 2] == 'A' && lookup[row - 3][col - 3] == 'S' {
-                    total += 1;
-                }
-            }
-        }
+    // top-left -> bottom-right, starting at the top row
+    for x in 0..cols {
+        total += count_xmas(&form_diagonal(&lookup, x..cols, 0..rows));
     }
 
-    // diagonal tr-bl
-    for row in 0..lookup.len() - 3 {
-        for col in 3..lookup[row].len() {
-            if lookup[row][col] == 'X' {
-                if lookup[row + 1][col - 1] == 'M' && lookup[row + 2][col - 2] == 'A' && lookup[row + 3][col - 3] == 'S' {
-                    total += 1;
-                }
-            }
-        }
+    // top-left -> bottom-right, starting at the left column. Skip (0,0).
+    for y in 1..rows {
+        total += count_xmas(&form_diagonal(&lookup, 0..cols, y..rows));
     }
-    for row in 3..lookup.len() {
-        for col in 0..lookup[row].len() - 3  {
-            if lookup[row][col] == 'X' {
-                if lookup[row - 1][col + 1] == 'M' && lookup[row - 2][col + 2] == 'A' && lookup[row - 3][col + 3] == 'S' {
-                    total += 1;
-                }
-            }
-        }
+
+    // top-right -> bottom-left, starting at the top row
+    for x in 0..cols {
+        total += count_xmas(&form_diagonal(&lookup, (0..x+1).rev(), 0..rows));
     }
+
+    // top-right -> bottom-left, starting at the right column. Skip (cols, 0);
+    for y in 1..rows {
+        total += count_xmas(&form_diagonal(&lookup, (0..cols).rev(), y..rows));
+    }
+
     total
 }
 
@@ -141,13 +108,13 @@ mod tests {
 
     #[test]
     fn test_level1_manual() {
-        // let input = vec!["AMXMA"];
-        // assert_eq!(solve_level1(&input), 0);
+        let input = vec!["AMXMA"];
+        assert_eq!(solve_level1(&input), 0);
 
-        // let input = vec!["XMASXMAS"];
-        // assert_eq!(solve_level1(&input), 2);
-        // let input = vec!["XMASSAMX"];
-        // assert_eq!(solve_level1(&input), 2);
+        let input = vec!["XMASXMAS"];
+        assert_eq!(solve_level1(&input), 2);
+        let input = vec!["XMASSAMX"];
+        assert_eq!(solve_level1(&input), 2);
 
         let input = vec![
             "X.....",
@@ -182,12 +149,12 @@ mod tests {
         assert_eq!(solve_level1(&input), 1);
 
         let input = vec![
-            "......",
-            ".....S",
-            "....A.",
-            "...M..",
+            ".....X",
+            "....MS",
+            "...AA.",
+            "..SM..",
             "..X..."
         ];
-        assert_eq!(solve_level1(&input), 1);
+        assert_eq!(solve_level1(&input), 2);
     }
 }
