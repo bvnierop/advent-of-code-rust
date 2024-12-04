@@ -65,24 +65,16 @@ impl RunConfig {
                third: Option<YearOrDayOrInput>,
                level: Option<u8>,
                solver: Option<String>) -> RunConfig {
-        let year = extract_year(&first)
-            .unwrap_or_else(|| extract_year(&second)
-                            .unwrap_or_else(|| extract_year(&third)
-                                            .unwrap_or(0)));
-        let day = extract_day(&first)
-            .unwrap_or_else(|| extract_day(&second)
-                            .unwrap_or_else(|| extract_day(&third)
-                                            .unwrap_or(0)));
+        let args = [first, second, third];
 
-        let input = extract_input(&first)
-            .unwrap_or_else(|| extract_input(&second)
-                            .unwrap_or_else(|| extract_input(&third)
-                                            .unwrap_or(String::new())));
+        let year = args.iter().filter_map(extract_year).next();
+        let day = args.iter().filter_map(extract_day).next();
+        let input_file = args.iter().filter_map(extract_input).next();
 
         RunConfig {
-            year: if year == 0 { None } else { Some(year) },
-            day: if day == 0 { None } else { Some(day) },
-            input_file: if input.is_empty() { None } else { Some(input) },
+            year,
+            day,
+            input_file,
             level,
             solver
         }
