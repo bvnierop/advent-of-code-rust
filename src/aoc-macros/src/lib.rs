@@ -30,7 +30,7 @@ pub fn advent_of_code(args: TokenStream, input: TokenStream) -> TokenStream {
         #[doc(hidden)]
         #[allow(non_snake_case)]
         pub fn #fn_runner_name(input: &[&str]) -> String {
-            format!("{}", #fn_name(input))
+            format!("{:?}", #fn_name(input))
         }
 
         #[doc(hidden)]
