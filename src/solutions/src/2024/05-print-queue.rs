@@ -18,12 +18,12 @@ pub fn solve_level1(input: &[&str]) -> u32 {
     let mut before_map: HashMap<u32, HashSet<u32>> = HashMap::new();
 
     for (before, after) in rules {
-        before_map.entry(after).or_insert(HashSet::new()).insert(before);
+        before_map.entry(after).or_default().insert(before);
     }
 
     updates.iter()
            .filter(|update| update.iter().copied().is_sorted_by(|a, b| {
-               !before_map.get(a).unwrap_or(&HashSet::new()).contains(b)
+               !before_map.entry(*a).or_default().contains(b)
            }))
            .map(|update| update[update.len() / 2])
            .sum()
@@ -41,16 +41,16 @@ pub fn solve_level2(input: &[&str]) -> u32 {
     let mut before_map: HashMap<u32, HashSet<u32>> = HashMap::new();
 
     for (before, after) in rules {
-        before_map.entry(after).or_insert(HashSet::new()).insert(before);
+        before_map.entry(after).or_default().insert(before);
     }
 
     updates.iter()
            .filter(|update| !update.iter().copied().is_sorted_by(|a, b| {
-               !before_map.get(a).unwrap_or(&HashSet::new()).contains(b)
+               !before_map.get(a).map_or(false, |s| s.contains(b))
            }))
         .map(|update| update.iter().sorted_by(|a, b| {
             if a == b { Ordering::Equal }
-            else if before_map.get(a).unwrap_or(&HashSet::new()).contains(b) { Ordering::Greater }
+            else if before_map.get(a).map_or(false, |s|s.contains(b)) { Ordering::Greater }
             else { Ordering::Less }
         }).collect::<Vec<_>>())
         .map(|update| update[update.len() / 2])
