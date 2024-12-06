@@ -65,43 +65,53 @@ pub fn solve_level2(input: &[&str]) -> usize {
     let dx: [i32; 4] = [0, 1, 0, -1];
     let dy: [i32; 4] = [-1, 0, 1, 0];
 
-    let total_runs = map.len() * map[0].len();
-    println!("Total runs: {}", total_runs);
-    let mut run = 0;
+    let mut dir = 0;
+    let mut seen: HashSet<(i32, i32)> = HashSet::new();
+    loop {
+        seen.insert((gx, gy));
+
+        // step: move forward if possible
+        let nx = gx + dx[dir];
+        let ny = gy + dy[dir];
+
+        // We're done if we're out of bounds
+        if nx < 0 || nx >= map[0].len() as i32 || ny < 0 || ny >= map.len() as i32 { break; }
+        let ahead = map[ny as usize][nx as usize];
+
+        // turn if blocked
+        if ahead == '#' {
+            dir = (dir + 1) % 4;
+        } else {
+            gx = nx; gy = ny;
+        }
+    }
 
     // simulate all the options
     let mut cycles = 0;
-    for y in 0..map.len() {
-        for x in 0..map[0].len() {
-            run += 1;
-            if run % 1000 == 0 {
-                println!("Run {}/{}", run, total_runs);
-            }
+    for (x, y) in seen {
+        // restore state
+        gx = ogx; gy = ogy;
+        let mut dir = 0;
+        let mut seen: HashSet<(i32, i32, usize)> = HashSet::new();
+        loop {
+            // if we've seen the current position, we can move on
+            if seen.contains(&(gx, gy, dir)) { cycles += 1; break; }
+            seen.insert((gx, gy, dir));
 
-            // restore state
-            gx = ogx; gy = ogy;
-            let mut dir = 0;
-            let mut seen: HashSet<(i32, i32, usize)> = HashSet::new();
-            loop {
-                // if we've seen the current position, we can move on
-                if seen.contains(&(gx, gy, dir)) { cycles += 1; break; }
-                seen.insert((gx, gy, dir));
+            // step: move forward if possible
+            let nx = gx + dx[dir];
+            let ny = gy + dy[dir];
 
-                // step: move forward if possible
-                let nx = gx + dx[dir];
-                let ny = gy + dy[dir];
+            // We're done if we're out of bounds
+            if nx < 0 || nx >= map[0].len() as i32 || ny < 0 || ny >= map.len() as i32 { break; }
+            let mut ahead = map[ny as usize][nx as usize];
+            if ny == y as i32 && nx == x as i32 { ahead = '#' }
 
-                // We're done if we're out of bounds
-                if nx < 0 || nx >= map[0].len() as i32 || ny < 0 || ny >= map.len() as i32 { break; }
-                let mut ahead = map[ny as usize][nx as usize];
-                if ny == y as i32 && nx == x as i32 { ahead = '#' }
-
-                // turn if blocked
-                if ahead == '#' {
-                    dir = (dir + 1) % 4;
-                } else {
-                    gx = nx; gy = ny;
-                }
+            // turn if blocked
+            if ahead == '#' {
+                dir = (dir + 1) % 4;
+            } else {
+                gx = nx; gy = ny;
             }
         }
     }
