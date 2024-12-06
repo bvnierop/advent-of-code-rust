@@ -11,6 +11,9 @@ pub fn solve_level1(input: &[&str]) -> usize {
     // build grid
     let map: Vec<Vec<_>> = input.iter().map(|&line| line.chars().collect()).collect();
 
+    let width = input[0].len() as i32;
+    let height = input.len() as i32;
+
     // find guard
     let mut gx: i32 = 0; let mut gy: i32 = 0;
     for (y, row) in map.iter().cloned().enumerate() {
@@ -34,7 +37,7 @@ pub fn solve_level1(input: &[&str]) -> usize {
         let ny = gy + dy[dir];
 
         // We're done if we're out of bounds
-        if nx < 0 || nx >= map[0].len() as i32 || ny < 0 || ny >= map.len() as i32 { break; }
+        if nx < 0 || nx >= width || ny < 0 || ny >= height { break; }
         let ahead = map[ny as usize][nx as usize];
 
         // turn if blocked
@@ -51,6 +54,10 @@ pub fn solve_level1(input: &[&str]) -> usize {
 pub fn solve_level2(input: &[&str]) -> usize {
     // build grid
     let map: Vec<Vec<_>> = input.iter().map(|&line| line.chars().collect()).collect();
+
+    let width = input[0].len() as i32;
+    let height = input.len() as i32;
+
     // find guard
     let mut gx: i32 = 0; let mut gy: i32 = 0;
     for (y, row) in map.iter().cloned().enumerate() {
@@ -75,7 +82,7 @@ pub fn solve_level2(input: &[&str]) -> usize {
         let ny = gy + dy[dir];
 
         // We're done if we're out of bounds
-        if nx < 0 || nx >= map[0].len() as i32 || ny < 0 || ny >= map.len() as i32 { break; }
+        if nx < 0 || nx >= width || ny < 0 || ny >= height { break; }
         let ahead = map[ny as usize][nx as usize];
 
         // turn if blocked
@@ -86,24 +93,31 @@ pub fn solve_level2(input: &[&str]) -> usize {
         }
     }
 
-    // simulate all the options
+    let mut vis: [[[bool; 4]; 150]; 150] = [[[false; 4]; 150]; 150];
     let mut cycles = 0;
     for (x, y) in seen {
         // restore state
         gx = ogx; gy = ogy;
         let mut dir = 0;
-        let mut seen: HashSet<(i32, i32, usize)> = HashSet::new();
+        for x in 0..width {
+            for y in 0..height {
+                for d in 0..4 {
+                    vis[y as usize][x as usize][d as usize] = false;
+                }
+            }
+        }
+
         loop {
             // if we've seen the current position, we can move on
-            if seen.contains(&(gx, gy, dir)) { cycles += 1; break; }
-            seen.insert((gx, gy, dir));
+            if vis[gy as usize][gx as usize][dir] == true { cycles += 1; break; }
+            vis[gy as usize][gx as usize][dir] = true;
 
             // step: move forward if possible
             let nx = gx + dx[dir];
             let ny = gy + dy[dir];
 
             // We're done if we're out of bounds
-            if nx < 0 || nx >= map[0].len() as i32 || ny < 0 || ny >= map.len() as i32 { break; }
+            if nx < 0 || nx >= width as i32 || ny < 0 || ny >= height as i32 { break; }
             let mut ahead = map[ny as usize][nx as usize];
             if ny == y as i32 && nx == x as i32 { ahead = '#' }
 
