@@ -15,52 +15,37 @@ fn parse(line: &str) -> Equation {
     numbers.split_whitespace().map(|s| s.parse::<u64>().unwrap()).collect())
 }
 
-fn is_solvable((expected, numbers): &Equation) -> bool {
+fn is_solvable((expected, numbers): &Equation, operators: &Vec<impl Fn(u64, u64) -> u64>) -> bool {
 
-    fn recurse(numbers: &Vec<u64>, index: usize, result: u64, expected: u64) -> bool {
+    fn recurse(numbers: &Vec<u64>, index: usize, result: u64, expected: u64, operators: &Vec<impl Fn(u64, u64) -> u64>) -> bool {
         if index == numbers.len() && result == expected { return true; }
         if index == numbers.len() && result != expected { return false; }
 
         let next = numbers[index];
-        if recurse(numbers, index + 1, result + next, expected) == true { return true; }
-        if recurse(numbers, index + 1, result * next, expected) == true { return true; }
-
-        false
+        operators
+            .iter()
+            .any(|o| recurse(numbers, index + 1, o(result, next), expected, operators))
     }
 
-    recurse(numbers, 1, numbers[0], *expected)
-}
-
-
-fn is_solvable2((expected, numbers): &Equation) -> bool {
-
-    fn recurse(numbers: &Vec<u64>, index: usize, result: u64, expected: u64) -> bool {
-        if index == numbers.len() && result == expected { return true; }
-        if index == numbers.len() && result != expected { return false; }
-
-        let next = numbers[index];
-        if recurse(numbers, index + 1, result + next, expected) == true { return true; }
-        if recurse(numbers, index + 1, result * next, expected) == true { return true; }
-        let c = format!("{}{}", result, next).parse::<u64>().unwrap();
-        if recurse(numbers, index + 1, c, expected) == true { return true; }
-
-
-        false
-    }
-
-    recurse(numbers, 1, numbers[0], *expected)
+    recurse(numbers, 1, numbers[0], *expected, operators)
 }
 
 #[advent_of_code(2024, 7, 1)]
 pub fn solve_level1(input: &[&str]) -> u64 {
     let equations = input.iter().copied().map(parse);
-    equations.filter(is_solvable).map(|(e, _n)| e).sum()
+    let operators: Vec<_> = vec![|a, b| a + b, |a, b| a * b];
+    equations.filter(|e| is_solvable(e, &operators)).map(|(e, _n)| e).sum()
+}
+
+fn concat_numbers(a: u64, b: u64) -> u64 {
+    a * 10u64.pow(b.ilog10() + 1) + b
 }
 
 #[advent_of_code(2024, 7, 2)]
 pub fn solve_level2(input: &[&str]) -> u64 {
     let equations = input.iter().copied().map(parse);
-    equations.filter(is_solvable2).map(|(e, _n)| e).sum()
+    let operators: Vec<_> = vec![|a, b| a + b, |a, b| a * b, concat_numbers];
+    equations.filter(|e| is_solvable(e, &operators)).map(|(e, _n)| e).sum()
 }
 
 #[cfg(test)]
