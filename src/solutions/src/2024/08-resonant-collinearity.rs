@@ -25,20 +25,18 @@ pub fn solve_level1(input: &[&str]) -> usize {
 
     let mut antinodes: HashSet<(i32, i32)> = HashSet::new();
     for freq in &frequencies {
-        for (i, (x1, y1)) in frequency_map[freq].iter().enumerate() {
-            for (x2, y2) in frequency_map[freq][i+1..].iter() {
-                let dx = (x1 - x2).abs();
-                let dy = (y1 - y2).abs();
+        for ((x1, y1), (x2, y2)) in frequency_map[freq].iter().tuple_combinations() {
+            let dx = (x1 - x2).abs();
+            let dy = (y1 - y2).abs();
 
-                let anx1 = if x1 < x2 { x1 - dx } else { x1 + dx };
-                let any1 = if y1 < y2 { y1 - dy } else { y1 + dy };
+            let anx1 = if x1 < x2 { x1 - dx } else { x1 + dx };
+            let any1 = if y1 < y2 { y1 - dy } else { y1 + dy };
 
-                let anx2 = if x2 < x1 { x2 - dx } else { x2 + dx };
-                let any2 = if y2 < y1 { y2 - dy } else { y2 + dy };
+            let anx2 = if x2 < x1 { x2 - dx } else { x2 + dx };
+            let any2 = if y2 < y1 { y2 - dy } else { y2 + dy };
 
-                antinodes.insert((anx1, any1));
-                antinodes.insert((anx2, any2));
-            }
+            antinodes.insert((anx1, any1));
+            antinodes.insert((anx2, any2));
         }
     }
 
@@ -67,41 +65,39 @@ pub fn solve_level2(input: &[&str]) -> usize {
 
     let mut antinodes: HashSet<(i32, i32)> = HashSet::new();
     for freq in &frequencies {
-        for (i, (x1, y1)) in frequency_map[freq].iter().enumerate() {
-            for (x2, y2) in frequency_map[freq][i+1..].iter() {
-                let dx = (x1 - x2).abs();
-                let dy = (y1 - y2).abs();
+        for ((x1, y1), (x2, y2)) in frequency_map[freq].iter().tuple_combinations() {
+            let dx = (x1 - x2).abs();
+            let dy = (y1 - y2).abs();
 
-                // side one
-                let dx1 = if x1 < x2 { -dx } else { dx };
-                let dy1 = if y1 < y2 { -dy } else { dy };
+            // side one
+            let dx1 = if x1 < x2 { -dx } else { dx };
+            let dy1 = if y1 < y2 { -dy } else { dy };
 
-                let mut xx: i32 = *x1; let mut yy: i32 = *y1;
+            let mut xx: i32 = *x1; let mut yy: i32 = *y1;
+            xx += dx1; yy += dy1;
+            while xx >= 0 && xx < width && yy >= 0 && yy < height {
+                antinodes.insert((xx, yy));
                 xx += dx1; yy += dy1;
-                while xx >= 0 && xx < width && yy >= 0 && yy < height {
-                    antinodes.insert((xx, yy));
-                    xx += dx1; yy += dy1;
-                }
-
-                let dx2 = if x1 < x2 { dx } else { -dx };
-                let dy2 = if y1 < y2 { dy } else { -dy };
-                let mut xx: i32 = *x1; let mut yy: i32 = *y1;
-                xx += dx2; yy += dy2;
-                while xx >= 0 && xx < width && yy >= 0 && yy < height {
-                    antinodes.insert((xx, yy));
-                    xx += dx2; yy += dy2;
-                }
-
-                antinodes.insert((*x1, *y1));
-                antinodes.insert((*x2, *y2));
             }
+
+            let dx2 = if x1 < x2 { dx } else { -dx };
+            let dy2 = if y1 < y2 { dy } else { -dy };
+            let mut xx: i32 = *x1; let mut yy: i32 = *y1;
+            xx += dx2; yy += dy2;
+            while xx >= 0 && xx < width && yy >= 0 && yy < height {
+                antinodes.insert((xx, yy));
+                xx += dx2; yy += dy2;
+            }
+
+            antinodes.insert((*x1, *y1));
+            antinodes.insert((*x2, *y2));
         }
     }
 
     antinodes.iter()
-        .copied()
-        .filter(|(x, y)| *x >= 0 && *x < width && *y >= 0 && *y < height)
-        .count()
+             .copied()
+             .filter(|(x, y)| *x >= 0 && *x < width && *y >= 0 && *y < height)
+             .count()
 }
 
 #[cfg(test)]
