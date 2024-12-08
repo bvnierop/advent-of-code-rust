@@ -20,6 +20,7 @@ fn is_solvable((expected, numbers): &Equation, operators: &Vec<impl Fn(u64, u64)
     fn recurse(numbers: &Vec<u64>, index: usize, result: u64, expected: u64, operators: &Vec<impl Fn(u64, u64) -> u64>) -> bool {
         if index == numbers.len() && result == expected { return true; }
         if index == numbers.len() && result != expected { return false; }
+        if result >= expected { return false; }
 
         let next = numbers[index];
         operators
