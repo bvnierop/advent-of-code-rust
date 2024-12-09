@@ -46,9 +46,9 @@ pub fn solve_level1(input: &[&str]) -> u64 {
     }
 
     mem.iter().copied().filter(|&x| x != -1)
-        .enumerate()
-        .map(|(i, m)| i as u64 * m as u64)
-        .sum()
+                       .enumerate()
+                       .map(|(i, m)| i as u64 * m as u64)
+                       .sum()
 }
 
 #[advent_of_code(2024, 9, 2)]
@@ -108,7 +108,7 @@ pub fn solve_level2(input: &[&str]) -> u64 {
                 break;
             }
             left += 1;
-
+        }
 
         // at this point, `left` is the start of the empty block,
         // and `right` is the start of the file.
@@ -123,10 +123,70 @@ pub fn solve_level2(input: &[&str]) -> u64 {
     }
 
     mem.iter().copied()
-        .enumerate()
-        .filter(|(_i, x)| *x != -1)
-        .map(|(i, m)| i as u64 * m as u64)
-        .sum()
+              .enumerate()
+              .filter(|(_i, x)| *x != -1)
+              .map(|(i, m)| i as u64 * m as u64)
+              .sum()
+}
+
+#[derive(Copy, Clone)]
+struct Block {
+    start: u64,
+    size: u64
+}
+
+#[derive(Copy, Clone)]
+struct File {
+    id: u64,
+    start: u64,
+    size: u64
+}
+
+#[advent_of_code(2024, 9, 2)]
+pub fn solve_with_blocks(input: &[&str]) -> u64 {
+    let digits: Vec<_> = input[0].chars().map(|c| c.to_digit(10).unwrap() as u64).collect();
+
+    let mut files: Vec<File> = vec![];
+    let mut empty: Vec<Block> = vec![];
+    let mut file_id = 0;
+    let mut is_file = true;
+    let mut at = 0;
+    for digit in digits {
+        if !is_file {
+            empty.push(Block { start: at, size: digit });
+        } else {
+            files.push(File { id: file_id, start: at, size: digit });
+            file_id += 1;
+        }
+        at += digit;
+        is_file = !is_file;
+    }
+
+
+    // for each file (in reverse)
+    for file_idx in (0..files.len()).rev() {
+        let file = files[file_idx];
+        //    find a block in memory
+        if let Some(empty_block_idx) = empty.iter().position(|block| block.size >= file.size) {
+            //    if one exist
+            let block = empty[empty_block_idx];
+            if block.start < file.start {
+                //      put the file there
+                files[file_idx] = File { id: file.id, start: block.start, size: file.size };
+                //      split the memory block
+                empty[empty_block_idx] = Block { start: block.start + file.size, size: block.size - file.size };
+            }
+        }
+    }
+
+    let mut sum = 0;
+    for file in files {
+        sum += (file.start..(file.start + file.size))
+            .map(|pos| pos * file.id)
+            .sum::<u64>();
+    }
+
+    sum
 }
 
 #[cfg(test)]
@@ -150,5 +210,12 @@ mod tests {
         let input: Vec<_> = (*SAMPLE).lines().collect();
         let expected = (*SAMPLE_OUT).lines().skip(3).next().unwrap();
         assert_eq!(format!("{}", solve_level2(&input)), expected);
+    }
+
+    #[test]
+    fn test_level_with_blocks() {
+        let input: Vec<_> = (*SAMPLE).lines().collect();
+        let expected = (*SAMPLE_OUT).lines().skip(3).next().unwrap();
+        assert_eq!(format!("{}", solve_with_blocks(&input)), expected);
     }
 }
