@@ -6,8 +6,6 @@ use scan_fmt::scan_fmt;
 use itertools::Itertools;
 use std::collections::{HashMap, HashSet};
 
-//2179041971
-
 #[advent_of_code(2024, 9, 1)]
 pub fn solve_level1(input: &[&str]) -> u64 {
     let digits: Vec<_> = input[0].chars().map(|c| c.to_digit(10).unwrap() as u64).collect();
@@ -29,8 +27,6 @@ pub fn solve_level1(input: &[&str]) -> u64 {
         index += digit;
         is_empty = !is_empty;
     }
-
-    // println!("{:?}", mem);
 
     // look at right / left and move each one.
     let mut left = 0; let mut right = mem.len() - 1;
@@ -78,8 +74,6 @@ pub fn solve_level2(input: &[&str]) -> u64 {
     }
     file_id -= 1;
 
-    // println!("{:?}", mem);
-
     // look at right / left and move each one.
     let mut right: i32 = (mem.len() - 1) as i32;
     while file_id >= 0 {
@@ -95,8 +89,6 @@ pub fn solve_level2(input: &[&str]) -> u64 {
             fs += 1;
         }
         right += 1;
-
-        // println!("Found file at: {}", right);
 
         // look for a block to move it in
         let mut left = 0;
@@ -117,20 +109,15 @@ pub fn solve_level2(input: &[&str]) -> u64 {
             }
             left += 1;
 
-            // println!("Left at {}", left);
-        }
 
         // at this point, `left` is the start of the empty block,
         // and `right` is the start of the file.
-        //
         if left < right as usize {
             for i in 0..fs {
                 mem[left + i] = file_id;
                 mem[right as usize + i] = -1;
             }
         }
-
-        // println!("{:?}", mem);
 
         file_id -= 1;
     }
