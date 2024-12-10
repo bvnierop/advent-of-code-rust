@@ -29,7 +29,7 @@ pub fn solve_level1(input: &[&str]) -> u32 {
     let mut sum = 0;
     // for each trailhead
     for trailhead in trailheads {
-        //   bfs to find all paths to a '9'
+        //   bfs to find all reachable '9''s
         let mut q: VecDeque<Point> = VecDeque::new();
         let mut seen = vec![vec![false; width]; height];
         q.push_back(trailhead);
@@ -78,7 +78,7 @@ pub fn solve_level2(input: &[&str]) -> u32 {
     let mut sum = 0;
     // for each trailhead
     for trailhead in trailheads {
-        //   bfs to find all paths to a '9'
+        //   bfs to find all paths to all reachable '9''s
         let mut q: VecDeque<Point> = VecDeque::new();
         q.push_back(trailhead);
         while let Some((cx, cy)) = q.pop_front() {
