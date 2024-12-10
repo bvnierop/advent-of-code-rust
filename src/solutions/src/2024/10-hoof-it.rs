@@ -40,13 +40,13 @@ pub fn solve_level1(input: &[&str]) -> u32 {
             }
 
             for d in 0..4 {
-                let nx = cx as i32 + dx[d];
-                let ny = cy as i32 + dy[d];
-                if nx >= 0 && nx < width as i32 && ny >= 0 && ny < height as i32 {
-                    if map[ny as usize][nx as usize] - map[cy][cx] == 1 {
-                        if !seen[ny as usize][nx as usize] {
-                            q.push_back((nx as usize, ny as usize));
-                            seen[ny as usize][nx as usize] = true;
+                let nx = (cx as i32 + dx[d]) as usize;
+                let ny = (cy as i32 + dy[d]) as usize;
+                if nx < width && ny < height {
+                    if map[ny][nx] - map[cy][cx] == 1 {
+                        if !seen[ny][nx] {
+                            q.push_back((nx , ny ));
+                            seen[ny][nx] = true;
                         }
                     }
                 }
@@ -80,7 +80,6 @@ pub fn solve_level2(input: &[&str]) -> u32 {
     for trailhead in trailheads {
         //   bfs to find all paths to a '9'
         let mut q: VecDeque<Point> = VecDeque::new();
-        let mut seen = vec![vec![false; width]; height];
         q.push_back(trailhead);
         while let Some((cx, cy)) = q.pop_front() {
             if map[cy][cx] == 9 {
@@ -89,14 +88,11 @@ pub fn solve_level2(input: &[&str]) -> u32 {
             }
 
             for d in 0..4 {
-                let nx = cx as i32 + dx[d];
-                let ny = cy as i32 + dy[d];
-                if nx >= 0 && nx < width as i32 && ny >= 0 && ny < height as i32 {
-                    if map[ny as usize][nx as usize] - map[cy][cx] == 1 {
-                        // if !seen[ny as usize][nx as usize] {
-                            q.push_back((nx as usize, ny as usize));
-                            seen[ny as usize][nx as usize] = true;
-                        // }
+                let nx = (cx as i32 + dx[d]) as usize;
+                let ny = (cy as i32 + dy[d]) as usize;
+                if nx < width && ny < height {
+                    if map[ny][nx] - map[cy][cx] == 1 {
+                        q.push_back((nx , ny ));
                     }
                 }
             }
