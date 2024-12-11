@@ -170,8 +170,8 @@ fn run_solver(
     expected_output: Option<&str>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     println!(
-        "Running solver for {}-{:02}-{}, level {}: {}",
-        solver.year, solver.day, solver.level, solver.level, solver.name
+        "Running solver for {}-12-{:02}, level {}: {}",
+        solver.year, solver.day, solver.level, solver.name
     );
 
     let input_refs: Vec<&str> = input.iter().map(|s| s.as_str()).collect();
