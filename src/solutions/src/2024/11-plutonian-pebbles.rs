@@ -4,7 +4,7 @@ use aoc_macros::advent_of_code;
 use inventory;
 use scan_fmt::scan_fmt;
 use itertools::Itertools;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap;
 
 #[advent_of_code(2024, 11, 1)]
 pub fn solve_level1(input: &[&str]) -> usize {
@@ -34,7 +34,7 @@ pub fn solve_level1(input: &[&str]) -> usize {
     stones.len()
 }
 
-fn solve_single_stone(stone: u128, step: u8, max_steps: u8, cache: &mut HashMap<(u128, u8), u128>) -> u128 {
+fn solve_single_stone(stone: u128, step: u8, max_steps: u8, cache: &mut FxHashMap<(u128, u8), u128>) -> u128 {
     if step == max_steps {
         return 1;
     }
@@ -64,7 +64,7 @@ pub fn solve_level2(input: &[&str]) -> u128 {
     let stones: Vec<_> = input.join("").split_whitespace().map(|num| num.parse::<u128>().unwrap()).collect();
 
     let mut sum = 0;
-    let mut cache: HashMap<(u128, u8), u128> = HashMap::new();
+    let mut cache: FxHashMap<(u128, u8), u128> = FxHashMap::default();
     for stone in stones {
         sum += solve_single_stone(stone, 0, 75, &mut cache);
     }
@@ -75,31 +75,31 @@ pub fn solve_level2(input: &[&str]) -> u128 {
 #[advent_of_code(2024, 11, 2)]
 pub fn solve_with_counts(input: &[&str]) -> u128 {
     let stones: Vec<_> = input.join("").split_whitespace().map(|num| num.parse::<u128>().unwrap()).collect();
-    let mut counts: HashMap<u128, u128> = HashMap::new();
+    let mut counts: FxHashMap<u128, u128> = FxHashMap::default();
 
     for stone in stones {
         *counts.entry(stone).or_default() += 1;
     }
 
     for _blink in 0..75 {
-        let mut new_counts: HashMap<u128, u128> = HashMap::new();
-        for stone in counts.keys().copied() {
-            if stone == 0 {
-                *new_counts.entry(1u128).or_default() += counts[&stone];
-            } else {
-                let len = stone.ilog10() + 1;
-                if len % 2 == 0 {
-                    let div = 10u128.pow(len / 2);
-                    let p1 = stone / div;
-                    let p2 = stone % div;
+        counts = counts.into_iter()
+            .fold(FxHashMap::default(), |mut acc, (stone, count)| {
+                if stone == 0 {
+                    *acc.entry(1u128).or_default() += count;
+                } else {
+                    let len = stone.ilog10() + 1;
+                    if len % 2 == 0 {
+                        let div = 10u128.pow(len / 2);
+                        let p1 = stone / div;
+                        let p2 = stone % div;
 
-                    *new_counts.entry(p1).or_default() += counts[&stone];
-                    *new_counts.entry(p2).or_default() += counts[&stone];
-            } else {
-                *new_counts.entry(stone * 2024).or_default() += counts[&stone];
-            }}
-        }
-        counts = new_counts;
+                        *acc.entry(p1).or_default() += count;
+                        *acc.entry(p2).or_default() += count;
+                    } else {
+                        *acc.entry(stone * 2024).or_default() += count;
+                    }}
+                acc
+            });
     }
 
     counts.values().sum()
