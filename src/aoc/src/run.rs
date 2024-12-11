@@ -194,13 +194,30 @@ fn run_solver(
         }
     }
 
-    println!(
-        "Solver ran in {}:{:02}:{:02}.{:09}",
-        duration.as_secs() / 3600,
-        (duration.as_secs() % 3600) / 60,
-        duration.as_secs() % 60,
-        duration.subsec_nanos()
-    );
+    let duration_str = if duration.as_secs() >= 3600 {
+        format!("{}:{:02}:{:02}.{:03}", 
+            duration.as_secs() / 3600,
+            (duration.as_secs() % 3600) / 60,
+            duration.as_secs() % 60,
+            duration.subsec_millis())
+    } else if duration.as_secs() >= 60 {
+        format!("{}:{:02}.{:03}", 
+            duration.as_secs() / 60,
+            duration.as_secs() % 60,
+            duration.subsec_millis())
+    } else if duration.as_secs() >= 1 {
+        format!("{}.{:03}s", 
+            duration.as_secs(),
+            duration.subsec_millis())
+    } else if duration.as_millis() >= 1 {
+        format!("{}ms", duration.as_millis())
+    } else if duration.as_micros() >= 1 {
+        format!("{}μs", duration.as_micros())
+    } else {
+        format!("{}ns", duration.as_nanos())
+    };
+
+    println!("Solver ran in {}", duration_str);
     println!();
 
     Ok(())
