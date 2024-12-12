@@ -76,9 +76,8 @@ pub fn solve_level2(input: &[&str]) -> u64 {
 
     let mut seen = vec![vec![false; width]; height];
 
-    // unusual order: west, east, north, south
-    let dx: [i32; 4] = [ -1, 1, 0, 0 ];
-    let dy: [i32; 4] = [ 0, 0, -1, 1 ];
+    let dx: [i32; 4] = [ -1, 0, 1, 0 ];
+    let dy: [i32; 4] = [ 0, -1, 0, 1 ];
 
     let mut total = 0;
 
@@ -127,7 +126,7 @@ pub fn solve_level2(input: &[&str]) -> u64 {
             } // while q
 
             let mut sides = 0;
-            for d in 0..2 {
+            for d in 0..4 {
                 let mut lookup: FxHashSet<Point> = perimiter[d].iter().copied().collect();
 
                 for i in 0..perimiter[d].len() {
@@ -139,7 +138,7 @@ pub fn solve_level2(input: &[&str]) -> u64 {
 
                     // look at neighbours on the X-axis
                     let (cx, cy) = c;
-                    for dd in 2..4 {
+                    for dd in [(d + 1) % 4, (d + 3) % 4] {
                         let mut nx = (cx as i32 + dx[dd]) as usize;
                         let mut ny = (cy as i32 + dy[dd]) as usize;
 
@@ -152,31 +151,6 @@ pub fn solve_level2(input: &[&str]) -> u64 {
                 }
             }
 
-            for d in 2..4 {
-                let mut lookup: FxHashSet<Point> = perimiter[d].iter().copied().collect();
-
-                for i in 0..perimiter[d].len() {
-                    let c = perimiter[d][i];
-                    if !lookup.contains(&c) { continue; } // we already collapsed this point
-                    lookup.remove(&c);
-
-                    sides += 1;
-
-                    // look at neighbours on the Y-axis
-                    let (cx, cy) = c;
-                    for dd in 0..2 {
-                        let mut nx = (cx as i32 + dx[dd]) as usize;
-                        let mut ny = (cy as i32 + dy[dd]) as usize;
-
-
-                        while lookup.contains(&(nx, ny)) {
-                            lookup.remove(&(nx, ny));
-                            nx = (nx as i32 + dx[dd]) as usize;
-                            ny = (ny as i32 + dy[dd]) as usize;
-                        }
-                    }
-                }
-            }
             total += area * sides;
         } // for y
     } // for x
