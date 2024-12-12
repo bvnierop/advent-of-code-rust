@@ -209,10 +209,16 @@ fn run_solver(
         format!("{}.{:03}s", 
             duration.as_secs(),
             duration.subsec_millis())
-    } else if duration.as_millis() >= 1 {
+    } else if duration.as_millis() >= 10 {
         format!("{}ms", duration.as_millis())
-    } else if duration.as_micros() >= 1 {
+    } else if duration.as_millis() >= 1 {
+        format!("{}.{:03}ms", duration.as_millis(),
+                duration.subsec_micros())
+    } else if duration.as_micros() >= 10 {
         format!("{}μs", duration.as_micros())
+    } else if duration.as_micros() >= 1 {
+        format!("{}.{:03}μs", duration.as_micros(),
+                duration.subsec_nanos())
     } else {
         format!("{}ns", duration.as_nanos())
     };
