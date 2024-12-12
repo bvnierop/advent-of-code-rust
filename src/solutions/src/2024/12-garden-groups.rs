@@ -92,9 +92,7 @@ pub fn solve_level2(input: &[&str]) -> u64 {
             q.push_back((x, y));
             seen[y][x] = true;
             area += 1;
-            // update sides
-            // as either the top tile, or the left tile, or both of an area, this tile
-            // _always_ increments the sides
+            // store perimiter
             for d in 0..4 {
                 let nnx = (x as i32 + dx[d]) as usize;
                 let nny = (y as i32 + dy[d]) as usize;
@@ -113,7 +111,7 @@ pub fn solve_level2(input: &[&str]) -> u64 {
                         q.push_back((nx, ny));
                         seen[ny][nx] = true;
                         area += 1;
-                        // update perimiter
+                        // store perimiter
                         for d in 0..4 {
                             let nnx = (nx as i32 + dx[d]) as usize;
                             let nny = (ny as i32 + dy[d]) as usize;
@@ -125,6 +123,7 @@ pub fn solve_level2(input: &[&str]) -> u64 {
                 } // for d
             } // while q
 
+            // collapse perimiter into sides
             let mut sides = 0;
             for d in 0..4 {
                 let mut lookup: FxHashSet<Point> = perimiter[d].iter().copied().collect();
