@@ -39,12 +39,12 @@ pub fn solve_level1(input: &[&str]) -> usize {
     let width = map[0].len();
     let height = map.len();
 
-    let mut rx = 0; let mut ry = 0;
+    let mut ex = 0; let mut ey = 0;
     let mut sx = 0; let mut sy = 0;
     for y in 0..height {
         for x in 0..width {
             if map[y][x] == 'E' {
-                rx = x; ry = y;
+                ex = x; ey = y;
             }
             if map[y][x] == 'S' {
                 sx = x; sy = y;
@@ -59,11 +59,11 @@ pub fn solve_level1(input: &[&str]) -> usize {
     let mut pq = BinaryHeap::new();
     let mut dist = vec![vec![usize::max_value(); width]; height];
 
-    pq.push(State { x: rx, y: ry, c: 0, o: 1, p: FxHashSet::default() });
-    dist[ry][rx] = 0;
+    pq.push(State { x: sx, y: sy, c: 0, o: 1, p: FxHashSet::default() });
+    dist[sy][sx] = 0;
 
     while let Some(State { c, x, y, o, p }) = pq.pop() {
-        if x == sx && y == sy { return c; }
+        if x == ex && y == ey { return c; }
         // println!("Looking at ({}, {})", x, y);
 
         for d in 0..4 {
