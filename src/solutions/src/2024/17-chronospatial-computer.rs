@@ -62,7 +62,6 @@ const CDV: u8 = 7;
 
 fn run(mut program: Puter) -> Vec<u8> {
     let mut output: Vec<u8> = Vec::new();
-    // TODO: halt if not has next
 
     while program.has_next() {
         // read opcode
