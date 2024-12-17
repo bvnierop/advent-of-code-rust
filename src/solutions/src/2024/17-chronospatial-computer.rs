@@ -140,6 +140,7 @@ pub fn solve_level2(input: &[&str]) -> i64 {
     let mut program = parse_input(input);
     let orig = program.program.clone();
 
+
     let mut a = 1;
 
     // find an answer of the same length
@@ -181,8 +182,30 @@ pub fn solve_level2(input: &[&str]) -> i64 {
             return a;
         }
 
-        a += 1024 * 1024
+        a += 1024 * 1024 * 1024;
     }
+}
+
+fn find_quine(program: Puter, index: usize, partial: i64) -> i64 {
+    if index == 0 { return partial; }
+    for octal in 0..8 {
+        let res = run(Puter { a: partial * 8 + octal,
+                              b: program.b,
+                              c: program.c,
+                              program: program.program.clone(),
+                              ip: 0 });
+        if res == program.program[index - 1..] {
+            let res = find_quine(program.clone(), index - 1, partial * 8 + octal);
+            if res != -1 { return res; }
+        }
+    }
+    -1
+}
+
+#[advent_of_code(2024, 17, 2)]
+pub fn solve_level2_recurse(input: &[&str]) -> i64 {
+    let p = parse_input(input);
+    find_quine(p.clone(), p.program.len(), 0)
 }
 
 #[cfg(test)]
