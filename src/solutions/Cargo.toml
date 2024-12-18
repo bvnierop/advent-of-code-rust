@@ -17,6 +17,7 @@ im = "15.1.0"
 itertools = "0.13.0"
 regex = "1.11.1"
 rustc-hash = "2.1.0"
+ndarray = "0.16.1"
 
 [build-dependencies]
 heck = "0.4"
