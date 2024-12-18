@@ -5,7 +5,8 @@ use inventory;
 use scan_fmt::scan_fmt;
 use itertools::Itertools;
 use rustc_hash::{FxHashMap, FxHashSet};
-use std::collections::VecDeque;
+use std::collections::{LinkedList,VecDeque};
+use im::{Vector,vector,HashSet};
 
 #[advent_of_code(2021, 12, 1)]
 pub fn solve_level1(input: &[&str]) -> i32 {
@@ -51,29 +52,31 @@ pub fn solve_level2(input: &[&str]) -> i32 {
         paths.entry(to).or_default().insert(from);
     }
 
-    let mut q: VecDeque<(String, bool, Vec<String>, FxHashSet<String>)> = VecDeque::new();
-    let s: FxHashSet<String> = ["start".to_string()].iter().cloned().collect();
-    q.push_back(("start".to_string(), false, vec![], s));
-    let mut taken_paths = FxHashSet::default();
+    let start = "start".to_string();
+
+    let mut q: VecDeque<(&String, bool, Vector<&String>, HashSet<&String>)> = VecDeque::new();
+    let s: HashSet<&String> = [&start].into_iter().collect();
+    q.push_back((&start, false, vector![], s));
+    let mut taken_paths = HashSet::new();
     while let Some((cave, vis_small, taken_path, seen)) = q.pop_front() {
         if cave == "end" {
             taken_paths.insert(taken_path);
         } else {
-            for n in paths[&cave].iter() {
+            for n in paths[cave].iter() {
                 let mut tp = taken_path.clone();
-                tp.push(n.clone());
+                tp.push_front(n);
                 if *n == n.to_uppercase() {
-                    q.push_back((n.clone(), vis_small, tp, seen.clone()));
+                    q.push_back((n, vis_small, tp, seen.clone()));
                 } else if !seen.contains(n) {
                     if !vis_small { // we have not yet visited a small cave for free
-                        q.push_back((n.clone(), true, tp.clone(), seen.clone())); // visit a small cave for free
+                        q.push_back((n, true, tp.clone(), seen.clone())); // visit a small cave for free
                         let mut s = seen.clone(); // visit the small cave
-                        s.insert(n.clone());
-                        q.push_back((n.clone(), false, tp, s))
+                        s.insert(n);
+                        q.push_back((n, false, tp, s))
                     } else {
                         let mut s = seen.clone();
-                        s.insert(n.clone());
-                        q.push_back((n.clone(), vis_small, tp, s));
+                        s.insert(n);
+                        q.push_back((n, vis_small, tp, s));
                     }
                 }
             }
