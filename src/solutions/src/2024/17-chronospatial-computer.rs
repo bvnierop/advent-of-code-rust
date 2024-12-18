@@ -134,11 +134,12 @@ pub fn solve_level1(input: &[&str]) -> String {
         "]", "").to_string()
 }
 
+// Lucked out. This one works only on my own input
+// (and perhaps some others, but not the ones I've tried)
 #[advent_of_code(2024, 17, 2)]
 pub fn solve_level2(input: &[&str]) -> i64 {
     let mut program = parse_input(input);
     let orig = program.program.clone();
-
 
     let mut a = 1;
 
