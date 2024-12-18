@@ -60,18 +60,15 @@ pub fn solve_level1(input: &[&str]) -> usize {
     solve1(input, 71, 1024)
 }
 
-pub fn solve2(input: &[&str], dim: usize, start_at: usize) -> String {
-    for i in start_at..input.len() {
-        if solve1(input, dim, i) == 0 {
-            return input[i-1].to_string();
-        }
-    }
-    "Not found".to_string()
+pub fn solve2(input: &[&str], dim: usize) -> String {
+    let amounts_to_drop: Vec<_> = (0..input.len()).rev().collect();
+    let first_zero_index = amounts_to_drop.partition_point(|&amount| solve1(input, dim, amount) == 0);
+    input[amounts_to_drop[first_zero_index]].to_string()
 }
 
 #[advent_of_code(2024, 18, 2)]
 pub fn solve_level2(input: &[&str]) -> String {
-    solve2(input, 71, 1023)
+    solve2(input, 71)
 }
 
 #[cfg(test)]
@@ -94,6 +91,6 @@ mod tests {
     fn test_level2() {
         let input: Vec<_> = (*SAMPLE).lines().collect();
         let expected = (*SAMPLE_OUT).lines().skip(3).next().unwrap();
-        assert_eq!(format!("{}", solve2(&input, 7, 12)), expected);
+        assert_eq!(format!("{}", solve2(&input, 7)), expected);
     }
 }
