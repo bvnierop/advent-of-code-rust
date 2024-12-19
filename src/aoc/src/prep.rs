@@ -91,6 +91,7 @@ fn get_current_advent() -> (u16, u8) {
 // ------------
 
 const SOLUTION_TEMPLATE: &str = r###"#![allow(unused_imports)]
+#![allow(unused_variables)]
 
 use aoc_macros::advent_of_code;
 use inventory;
