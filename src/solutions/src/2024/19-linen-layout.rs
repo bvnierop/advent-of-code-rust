@@ -26,20 +26,16 @@ fn possible(requested: String, available: &[&str]) -> u64 {
 
 #[advent_of_code(2024, 19, 1)]
 pub fn solve_level1(input: &[&str]) -> usize {
-    let patterns_available: Vec<_> = input[0].split(", ").collect();
-    let patterns_requested: Vec<_> = input.iter().skip(2).collect();
-
-    // println!("{:?}", patterns_available);
+    let patterns_available = input[0].split(", ").collect_vec();
+    let patterns_requested = &input[2..];
 
     patterns_requested.iter().filter(|r| possible(r.to_string(), &patterns_available) != 0).count()
 }
 
 #[advent_of_code(2024, 19, 2)]
 pub fn solve_level2(input: &[&str]) -> u64 {
-    let patterns_available: Vec<_> = input[0].split(", ").collect();
-    let patterns_requested: Vec<_> = input.iter().skip(2).collect();
-
-    // println!("{:?}", patterns_available);
+    let patterns_available = input[0].split(", ").collect_vec();
+    let patterns_requested = &input[2..];
 
     patterns_requested.iter().map(|r| possible(r.to_string(), &patterns_available)).sum()
 }
