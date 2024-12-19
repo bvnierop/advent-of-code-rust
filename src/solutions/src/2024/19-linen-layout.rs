@@ -8,25 +8,8 @@ use im::{Vector,vector};
 use memoize::memoize;
 use rustc_hash::FxHashMap;
 
-fn possible(requested: String, available: &Vec<String>) -> bool {
-    if requested.is_empty() {
-        return true;
-    }
-
-    let mut found = false;
-    for a in available {
-        if requested.starts_with(a) {
-            if possible(requested[a.len()..].to_string(), available) {
-                found = true;
-                break;
-            }
-        }
-    }
-    found
-}
-
 #[memoize(CustomHasher: FxHashMap, HasherInit: FxHashMap::default(), Ignore: available)]
-fn possible2(requested: String, available: Vector<String>) -> u64 {
+fn possible(requested: String, available: Vector<String>) -> u64 {
     if requested.is_empty() {
         return 1;
     }
@@ -34,7 +17,7 @@ fn possible2(requested: String, available: Vector<String>) -> u64 {
     let mut found = 0;
     for a in available.clone() {
         if requested.starts_with(&a) {
-            found += possible2(requested[a.len()..].to_string(), available.clone());
+            found += possible(requested[a.len()..].to_string(), available.clone());
         }
     }
     found
@@ -47,7 +30,7 @@ pub fn solve_level1(input: &[&str]) -> usize {
 
     // println!("{:?}", patterns_available);
 
-    patterns_requested.iter().filter(|r| possible((**r).clone(), &patterns_available)).count()
+    patterns_requested.iter().filter(|r| possible((**r).clone(), Vector::from(&patterns_available)) != 0).count()
 }
 
 #[advent_of_code(2024, 19, 2)]
@@ -57,7 +40,7 @@ pub fn solve_level2(input: &[&str]) -> u64 {
 
     // println!("{:?}", patterns_available);
 
-    patterns_requested.iter().map(|r| possible2((*r).clone(), Vector::from(&patterns_available))).sum()
+    patterns_requested.iter().map(|r| possible((*r).clone(), Vector::from(&patterns_available))).sum()
 }
 
 #[cfg(test)]
