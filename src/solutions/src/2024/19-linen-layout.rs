@@ -1,4 +1,5 @@
 #![allow(unused_imports)]
+#![allow(unused_variables)]
 
 use aoc_macros::advent_of_code;
 use inventory;
@@ -9,15 +10,15 @@ use memoize::memoize;
 use rustc_hash::FxHashMap;
 
 #[memoize(CustomHasher: FxHashMap, HasherInit: FxHashMap::default(), Ignore: available)]
-fn possible(requested: String, available: Vector<String>) -> u64 {
+fn possible(requested: String, available: &[&str]) -> u64 {
     if requested.is_empty() {
         return 1;
     }
 
     let mut found = 0;
-    for a in available.clone() {
-        if requested.starts_with(&a) {
-            found += possible(requested[a.len()..].to_string(), available.clone());
+    for a in available {
+        if requested.starts_with(a) {
+            found += possible(requested[a.len()..].to_string(), available);
         }
     }
     found
@@ -25,22 +26,22 @@ fn possible(requested: String, available: Vector<String>) -> u64 {
 
 #[advent_of_code(2024, 19, 1)]
 pub fn solve_level1(input: &[&str]) -> usize {
-    let patterns_available: Vec<String> = input[0].split(", ").map(|word| word.to_string()).collect();
-    let patterns_requested: Vec<String> = input.iter().skip(2).map(|&line| line.to_string()).collect();
+    let patterns_available: Vec<_> = input[0].split(", ").collect();
+    let patterns_requested: Vec<_> = input.iter().skip(2).collect();
 
     // println!("{:?}", patterns_available);
 
-    patterns_requested.iter().filter(|r| possible((**r).clone(), Vector::from(&patterns_available)) != 0).count()
+    patterns_requested.iter().filter(|r| possible(r.to_string(), &patterns_available) != 0).count()
 }
 
 #[advent_of_code(2024, 19, 2)]
 pub fn solve_level2(input: &[&str]) -> u64 {
-    let patterns_available: Vec<String> = input[0].split(", ").map(|word| word.to_string()).collect();
-    let patterns_requested: Vec<String> = input.iter().skip(2).map(|&line| line.to_string()).collect();
+    let patterns_available: Vec<_> = input[0].split(", ").collect();
+    let patterns_requested: Vec<_> = input.iter().skip(2).collect();
 
     // println!("{:?}", patterns_available);
 
-    patterns_requested.iter().map(|r| possible((*r).clone(), Vector::from(&patterns_available))).sum()
+    patterns_requested.iter().map(|r| possible(r.to_string(), &patterns_available)).sum()
 }
 
 #[cfg(test)]
