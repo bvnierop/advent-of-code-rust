@@ -25,7 +25,7 @@ fn possible(requested: String, available: &Vec<String>) -> bool {
     found
 }
 
-#[memoize(CustomHasher: FxHashMap, HasherInit: FxHashMap::default())]
+#[memoize(CustomHasher: FxHashMap, HasherInit: FxHashMap::default(), Ignore: available)]
 fn possible2(requested: String, available: Vector<String>) -> u64 {
     if requested.is_empty() {
         return 1;
