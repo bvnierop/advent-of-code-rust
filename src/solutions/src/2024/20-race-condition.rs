@@ -137,8 +137,8 @@ pub fn solve_level2(input: &[&str]) -> usize {
     let mut count = 0;
     for y in 0..height {
         for x in 0..width {
-            for ny in 0..height {
-                for nx in 0..width {
+            for ny in y.saturating_sub(20)..height.min(y+21) {
+                for nx in x.saturating_sub(20)..width.min(x+21) {
                     let dist = (y as i64 - ny as i64).abs() + (x as i64 - nx as i64).abs();
                     if grid[y][x] != '#' && grid[ny][nx] != '#' && dist <= 20 {
                         let cheated = dists[y][x] + diste[ny][nx] + (dist as usize) - 1;
