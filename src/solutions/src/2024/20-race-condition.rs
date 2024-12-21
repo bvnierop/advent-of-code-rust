@@ -9,28 +9,12 @@ use std::collections::{BinaryHeap, VecDeque};
 use std::cmp::Ordering;
 use rustc_hash::FxHashSet;
 
-#[advent_of_code(2024, 20, 1)]
-pub fn solve_level1(input: &[&str]) -> usize {
-    let grid = input.into_iter().map(|line| line.chars().collect_vec()).collect_vec();
-
-    let width = grid[0].len();
-    let height = grid.len();
-
-    let mut sx = 0; let mut sy = 0;
-    let mut ex = 0; let mut ey = 0;
-    for y in 0..height {
-        for x in 0..width {
-            if grid[y][x] == 'S' {
-                sx = x; sy = y;
-            }
-            if grid[y][x] == 'E' {
-                ex = x; ey = y;
-            }
-        }
-    }
-
+fn dist_from(grid: &Vec<Vec<char>>, start: (usize, usize)) -> Vec<Vec<usize>> {
     let dx = [0, 1, 0, -1];
     let dy = [-1, 0, 1, 0];
+    let width = grid[0].len();
+    let height = grid.len();
+    let (sx, sy) = start;
 
     let mut q = VecDeque::new();
     q.push_back((sx, sy, 0));
@@ -46,43 +30,10 @@ pub fn solve_level1(input: &[&str]) -> usize {
             }
         }
     }
-
-    let mut q = VecDeque::new();
-    q.push_back((ex, ey, 0));
-    let mut diste = vec![vec![usize::max_value(); width]; height];
-    diste[ey][ex] = 0;
-    while let Some((x, y, c)) = q.pop_front() {
-        for d in 0..4 {
-            let nx = (x as i64 + dx[d]) as usize;
-            let ny = (y as i64 + dy[d]) as usize;
-            if nx < width && ny < height && diste[ny][nx] > c + 1 && grid[ny][nx] != '#' {
-                diste[ny][nx] = c + 1;
-                q.push_back((nx, ny, c + 1));
-            }
-        }
-    }
-
-    let mut count = 0;
-    for y in 0..height {
-        for x in 0..width {
-            for d in 0..4 {
-                let nx = (x as i64 + dx[d] * 2) as usize;
-                let ny = (y as i64 + dy[d] * 2) as usize;
-                if nx < width && ny < height {
-                    if grid[y][x] != '#' && grid[ny][nx] != '#' {
-                        let cheated = dists[y][x] + diste[ny][nx];
-                        if cheated + 100 < dists[ey][ex] { count += 1; }
-                    }
-                }
-            }
-        }
-    }
-
-    count
+    dists
 }
 
-#[advent_of_code(2024, 20, 2)]
-pub fn solve_level2(input: &[&str]) -> usize {
+pub fn solve(input: &[&str], diff: usize, jump: usize) -> usize {
     let grid = input.into_iter().map(|line| line.chars().collect_vec()).collect_vec();
 
     let width = grid[0].len();
@@ -101,48 +52,18 @@ pub fn solve_level2(input: &[&str]) -> usize {
         }
     }
 
-    let dx = [0, 1, 0, -1];
-    let dy = [-1, 0, 1, 0];
-
-    let mut q = VecDeque::new();
-    q.push_back((sx, sy, 0));
-    let mut dists = vec![vec![usize::max_value(); width]; height];
-    dists[sy][sx] = 0;
-    while let Some((x, y, c)) = q.pop_front() {
-        for d in 0..4 {
-            let nx = (x as i64 + dx[d]) as usize;
-            let ny = (y as i64 + dy[d]) as usize;
-            if nx < width && ny < height && dists[ny][nx] > c + 1 && grid[ny][nx] != '#' {
-                dists[ny][nx] = c + 1;
-                q.push_back((nx, ny, c + 1));
-            }
-        }
-    }
-
-    let mut q = VecDeque::new();
-    q.push_back((ex, ey, 0));
-    let mut diste = vec![vec![usize::max_value(); width]; height];
-    diste[ey][ex] = 0;
-    while let Some((x, y, c)) = q.pop_front() {
-        for d in 0..4 {
-            let nx = (x as i64 + dx[d]) as usize;
-            let ny = (y as i64 + dy[d]) as usize;
-            if nx < width && ny < height && diste[ny][nx] > c + 1 && grid[ny][nx] != '#' {
-                diste[ny][nx] = c + 1;
-                q.push_back((nx, ny, c + 1));
-            }
-        }
-    }
+    let dists = dist_from(&grid, (sx, sy));
+    let diste = dist_from(&grid, (ex, ey));
 
     let mut count = 0;
     for y in 0..height {
         for x in 0..width {
-            for ny in y.saturating_sub(20)..height.min(y+21) {
-                for nx in x.saturating_sub(20)..width.min(x+21) {
-                    let dist = (y as i64 - ny as i64).abs() + (x as i64 - nx as i64).abs();
-                    if grid[y][x] != '#' && grid[ny][nx] != '#' && dist <= 20 {
+            for ny in y.saturating_sub(jump)..height.min(y+jump+1) {
+                for nx in x.saturating_sub(jump)..width.min(x+jump+1) {
+                    let dist = ((y as i64 - ny as i64).abs() + (x as i64 - nx as i64).abs()) as usize;
+                    if grid[y][x] != '#' && grid[ny][nx] != '#' && dist <= jump {
                         let cheated = dists[y][x] + diste[ny][nx] + (dist as usize) - 1;
-                        if cheated + 100 < dists[ey][ex] {
+                        if cheated + diff < dists[ey][ex] {
                             count += 1;
                         }
                     }
@@ -152,6 +73,16 @@ pub fn solve_level2(input: &[&str]) -> usize {
     }
 
     count
+}
+
+#[advent_of_code(2024, 20, 1)]
+pub fn solve_level1(input: &[&str]) -> usize {
+    solve(input, 100, 2)
+}
+
+#[advent_of_code(2024, 20, 2)]
+pub fn solve_level2(input: &[&str]) -> usize {
+    solve(input, 100, 20)
 }
 
 #[cfg(test)]
