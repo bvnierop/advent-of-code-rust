@@ -50,7 +50,7 @@ fn create_map_for_buyer(start: i128) -> FxHashMap<u32, i8> {
         encoded_steps |= enc;
         encoded_steps &= 2u32.pow(20) - 1;
 
-        if !map.contains_key(&encoded_steps) && i > 3 { // monkey only buys first time
+        if !map.contains_key(&encoded_steps) && i >= 3 { // monkey only buys first time
             map.insert(encoded_steps, p2);
         }
     }
