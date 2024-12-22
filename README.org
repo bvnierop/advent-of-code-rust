@@ -4,6 +4,17 @@ This repository contains my solutions to [[https://adventofcode.com/][Advent of 
 two I switch language for Advent of Code, learning one I've not used before..
 This time, 2024, it's Rust.
 
+Previous years:
+|------+-------------+--------------------------------------------------------|
+| 2023 | F#          | https://github.com/bvnierop/advent-of-code-fsharp      |
+| 2022 | F#          | https://github.com/bvnierop/advent-of-code-fsharp      |
+| 2021 | Racket      | https://github.com/bvnierop/advent-of-code-racket      |
+| 2020 | Elixir      | https://github.com/bvnierop/advent-of-code-2020-elixir |
+| 2019 | OCaml       | https://github.com/bvnierop/advent-of-code-2019-ocaml  |
+| 2018 | Common Lisp | https://github.com/bvnierop/advent-of-code-2018        |
+| 2017 | Common Lisp | https://github.com/bvnierop/advent-of-code-2017        |
+|------+-------------+--------------------------------------------------------|
+
 * Project details
 Every time I participate in Advent of Code in a new language, I also build a new
 runner. This time I'm using AI assistance to (help) write the runner in an
