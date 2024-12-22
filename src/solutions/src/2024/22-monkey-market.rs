@@ -72,14 +72,7 @@ pub fn solve_level2(input: &[&str]) -> u32 {
         }
     }
 
-    let mut ans = 0;
-    for i in 0..=2u32.pow(20) {
-        if grand_map.contains_key(&i) {
-            ans = ans.max(grand_map[&i]);
-        }
-    }
-
-    ans
+    grand_map.into_values().max().unwrap()
 }
 
 #[cfg(test)]
