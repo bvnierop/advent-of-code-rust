@@ -159,7 +159,7 @@ fn create_all_files(year: u16, day: u8, name: &str, statement: &str, fs: &dyn Fi
     }
     
     create_file(fs, names.sample_in, "")?;
-    create_file(fs, names.sample_out, "\n\n")?;
+    create_file(fs, names.sample_out, "")?;
     
     if let Ok(input) = client.get_problem_input(year, day) {
         create_file(fs, names.input, &input)?;
